@@ -1,0 +1,208 @@
+#include "Engine.h"
+#include "D3DUtils.h"
+#include "GeometryGenerator.h"
+#include "Pipeline.h"
+#include <DirectXMath.h>
+#include <directxtk/SimpleMath.h>
+#include <memory>
+
+using namespace DirectX::SimpleMath;
+
+Engine::Engine()
+    : mMainWindow(0), mScreenWidth(1280), mScreenHeight(720), mDevice(nullptr),
+      mContext(nullptr), mSwapChain(nullptr), mBackBufferRTV(nullptr),
+      mViewRot(Vector2(0.0f)), mViewport({}) {
+    mGUIManager = std::make_shared<GUIManager>(mScreenWidth, mScreenHeight);
+    mRenderManager =
+        std::make_shared<RenderManager>(mScreenWidth, mScreenHeight);
+    // mGUIManager = std::make_shared<GUIManager>();
+    // mD3DUtils = std::make_shared<D3DUtils>();
+}
+
+Engine::~Engine() {
+
+    // Cleanup
+    ImGui_ImplDX11_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+
+    DestroyWindow(mMainWindow);
+
+#if defined(DEBUG) || defined(_DEBUG)
+    ID3D11Debug *d3dDebug = nullptr;
+    mDevice.Get()->QueryInterface(__uuidof(ID3D11Debug), (void **)&d3dDebug);
+    OutputDebugString(L"---------------------------print live object "
+                      L"start----------------------------\n");
+    d3dDebug->ReportLiveDeviceObjects(D3D11_RLDO_IGNORE_INTERNAL);
+    OutputDebugString(L"---------------------------print live object "
+                      L"end----------------------------\n");
+
+    d3dDebug->Release();
+#endif
+
+    std::cout << "Engine closed.\n";
+}
+
+bool Engine::InitEngine() {
+
+    bool ret = false;
+
+    mGUIManager->InitWindows(mMainWindow);
+    D3DUtils::CreateDevice(mDevice, mContext);
+    std::cout << "device ptr : " << mDevice.Get() << std::endl;
+    D3DUtils::CreateSwapChain(mDevice, mSwapChain, mMainWindow, mScreenWidth,
+                              mScreenHeight);
+    mGUIManager->InitGUI(mMainWindow, mDevice, mContext);
+
+    D3DUtils::CreateViewport(mContext, mViewport, mScreenWidth, mScreenHeight);
+    // D3DUtils::CreateRasterizerState(mDevice, mBasicRS);
+
+    // mCamera = std::make_shared<Camera>();
+
+    D3DUtils::CreateConstantBuffer(mDevice, mLight, mLightBuffer);
+
+    mRenderManager->InitRenderer(mDevice, mContext, mSwapChain);
+
+    return ret;
+}
+
+bool Engine::Run() {
+
+    MeshData squareMesh = GeometryGenerator::CreateSquare();
+    mScreenSquare = std::make_shared<Model>();
+    mScreenSquare->Initialize(mDevice, mContext, squareMesh);
+
+    // MeshData triangleMesh = GeometryGenerator::CreateTriangle();
+    MeshData sphereMesh =
+        GeometryGenerator::CreateSphere(50, 50, Vector2(2.0f, 1.0f));
+    // MeshData box = GeometryGenerator::CreateBox(0.5f);
+    std::string path = "./Assets/Textures/PBRTextures/";
+    //sphereMesh.albedoTextureFilename = path + "rusted-panels_albedo.png";
+    //sphereMesh.heightTextureFilename = path + "rusted-panels_height.png";
+    //sphereMesh.aoTextureFilename = path + "rusted-panels_ao.png";
+    //sphereMesh.metallicTextureFilename = path + "rusted-panels_metallic.png";
+    //sphereMesh.normalTextureFilename = path + "rusted-panels_normal-dx.png";
+    //sphereMesh.roughnessTextureFilename = path + "rusted-panels_roughness.png";
+
+    sphereMesh.albedoTextureFilename = path + "steelplate1_albedo.png";
+    sphereMesh.heightTextureFilename = path + "steelplate1_height.png";
+    sphereMesh.aoTextureFilename = path + "steelplate1_ao.png";
+    sphereMesh.metallicTextureFilename = path + "steelplate1_metallic.png";
+    sphereMesh.normalTextureFilename = path + "steelplate1_normal-dx.png";
+    sphereMesh.roughnessTextureFilename = path + "steelplate1_roughness.png";
+
+    mMainModel = std::make_shared<Model>();
+    // mMainModel->Initialize(mDevice, mContext, triangleMesh);
+    mMainModel->Initialize(mDevice, mContext, sphereMesh);
+    // this->objList.push_back(mMainModel);
+
+    MeshData skyBoxMesh = GeometryGenerator::CreateBox(30.0f);
+    mSkyBox = std::make_shared<Model>();
+    mSkyBox->Initialize(mDevice, mContext, skyBoxMesh);
+    this->objList.push_back(mSkyBox);
+
+    // init constant buffer
+    constData.proj = DirectX::XMMatrixPerspectiveFovLH(
+        DirectX::XMConvertToRadians(80.0), float(mScreenWidth) / mScreenHeight,
+        0.01f,
+        100.0f); // todo : move to camera::set
+
+    constData.proj = constData.proj.Transpose();
+    mEyePos = Vector3(0.0f, 0.0f, -3.0f);
+
+    constData.view = Matrix::CreateRotationX(mViewRot.x) *
+                     Matrix::CreateRotationY(mViewRot.y) *
+                     Matrix::CreateTranslation(-mEyePos);
+    constData.eyePos = Vector3::Transform(mEyePos, constData.view.Invert());
+    constData.view = constData.view.Transpose();
+    constData.vp = constData.proj * constData.view;
+
+    D3DUtils::CreateConstantBuffer(mDevice, constData, mConstantBuffer);
+
+    MSG msg = {0};
+    while (WM_QUIT != msg.message) {
+        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+        else {
+            ImGui_ImplDX11_NewFrame();
+            ImGui_ImplWin32_NewFrame();
+
+            ImGui::NewFrame();
+            ImGui::Begin("Scene Control");
+            ImGui::SetWindowPos(ImVec2(0.0f, 0.0f));
+            ImGui::SetWindowSize(ImVec2(230, 210));
+            ImGui::Text("Average %.3f ms/frame (%.1f FPS)",
+                        1000.0f / ImGui::GetIO().Framerate,
+                        ImGui::GetIO().Framerate);
+
+            ImGui::SliderFloat("metallic", &mMainModel->mMaterialData.metallic,
+                               0.0f, 1.0f);
+            ImGui::SliderFloat(
+                "roughness", &mMainModel->mMaterialData.roughness, 0.0f, 1.0f);
+
+            ImGui::SliderFloat3("position", &mLight.lightPos.x, -10.0f, 10.0f);
+            ImGui::SliderFloat2("viewrot", &mViewRot.x, -4.0f, 4.0f);
+            ImGui::SliderFloat("pow", &mLight.pow, 0.0f, 100.0f);
+
+            ImGui::End();
+
+            // render
+            this->Update();
+            this->Render();
+
+            // render end
+            ImGui::Render();
+            ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+            mSwapChain->Present(1, 0);
+        }
+    }
+    return true;
+}
+
+bool Engine::Update() {
+    D3DUtils::UpdateBuffer(mDevice, mContext, mMainModel->mMaterialData,
+                           mMainModel->mPixelCB);
+    D3DUtils::UpdateBuffer(mDevice, mContext, mLight, mLightBuffer);
+
+    constData.view = Matrix::CreateRotationX(mViewRot.x) *
+                     Matrix::CreateRotationY(mViewRot.y) *
+                     Matrix::CreateTranslation(-mEyePos);
+    constData.eyePos = Vector3::Transform(mEyePos, constData.view.Invert());
+    constData.view = constData.view.Transpose();
+    constData.vp = constData.proj * constData.view;
+
+    D3DUtils::UpdateBuffer(mDevice, mContext, constData, mConstantBuffer);
+    return true;
+}
+
+bool Engine::Render() {
+    std::vector<ID3D11Buffer *> cbList = {mConstantBuffer.Get(),
+                                          mLightBuffer.Get()};
+    std::vector<ID3D11RenderTargetView *> rtvs = {mBackBufferRTV.Get()};
+
+    // common states
+    mRenderManager->ClearDSV();
+
+    mContext->VSSetConstantBuffers(0, 2, cbList.data());
+    mContext->PSSetConstantBuffers(0, 2, cbList.data());
+
+    // render dafault objects
+    mRenderManager->RenderObjects();
+    mMainModel->Render(mContext); // objList[0]->Render(mContext);
+
+    // render skybox
+    mRenderManager->RenderSkybox();
+    mSkyBox->Render(mContext);
+
+    // tonemapping
+    // mRenderManager->RenderToneMap();
+
+    // render screen
+    mRenderManager->RenderScreen();
+    mScreenSquare->Render(mContext);
+
+    return 0;
+}
