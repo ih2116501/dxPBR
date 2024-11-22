@@ -81,9 +81,8 @@ void Model::Initialize(ComPtr<ID3D11Device> &device,
     D3DUtils::CreateIndexBuffer(device, meshData.indices, newMesh.mIndexBuffer);
     newMesh.indexCount = meshData.indices.size();
     mMeshes.push_back(newMesh);
-    mMaterialData.metallic = 0.7f;
-    mMaterialData.roughness = 0.3f;
-    D3DUtils::CreateConstantBuffer(device, mMaterialData, mPixelCB);
+    mPixelConstData.useWireframe = 0;
+    D3DUtils::CreateConstantBuffer(device, mPixelConstData, mPixelCB);
 }
 
 void Model::UpdateConstantBuffers(ComPtr<ID3D11Device> &device,

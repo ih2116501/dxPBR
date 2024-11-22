@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 RenderManager::RenderManager(int width, int height)
-    : mScreenWidth(width), mScreenHeight(height) {}
+    : mScreenWidth(width), mScreenHeight(height), mUseWireframe(false) {}
 
 RenderManager::~RenderManager() {}
 
@@ -136,6 +136,7 @@ void RenderManager::CreateRasterizerStates() {
         mDevice->CreateRasterizerState(&rastDesc, mSkyBoxRS.GetAddressOf()));
 
     rastDesc.FillMode = D3D11_FILL_WIREFRAME;
+    rastDesc.CullMode = D3D11_CULL_NONE;
     ThrowIfFailed(
         mDevice->CreateRasterizerState(&rastDesc, mWireframeRS.GetAddressOf()));
 }
@@ -186,11 +187,12 @@ void RenderManager::CreateBuffers() {
                                                     mFloatSRV.GetAddressOf()));
 }
 
-void RenderManager::ClearDSV() {
+void RenderManager::ClearFrame() {
     float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
     mContext->ClearRenderTargetView(mBackBufferRTV.Get(), clearColor);
     mContext->ClearDepthStencilView(
         mDSV.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+    mBasicPipeline.rs = mUseWireframe ? mWireframeRS : mBasicRS;
 }
 
 void RenderManager::RenderObjects() {

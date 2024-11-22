@@ -28,7 +28,9 @@ class RenderManager {
     void RenderSkybox();
     void RenderToneMap();
     void RenderScreen();
-    void ClearDSV();
+    void ClearFrame();
+    bool mUseWireframe;
+
 
   private:
     void CreateRasterizerStates();

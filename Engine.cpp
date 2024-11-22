@@ -74,22 +74,22 @@ bool Engine::Run() {
 
     // MeshData triangleMesh = GeometryGenerator::CreateTriangle();
     MeshData sphereMesh =
-        GeometryGenerator::CreateSphere(50, 50, Vector2(2.0f, 1.0f));
+        GeometryGenerator::CreateSphere(10, 10, Vector2(2.0f, 1.0f));
     // MeshData box = GeometryGenerator::CreateBox(0.5f);
     std::string path = "./Assets/Textures/PBRTextures/";
-    //sphereMesh.albedoTextureFilename = path + "rusted-panels_albedo.png";
-    //sphereMesh.heightTextureFilename = path + "rusted-panels_height.png";
-    //sphereMesh.aoTextureFilename = path + "rusted-panels_ao.png";
-    //sphereMesh.metallicTextureFilename = path + "rusted-panels_metallic.png";
-    //sphereMesh.normalTextureFilename = path + "rusted-panels_normal-dx.png";
-    //sphereMesh.roughnessTextureFilename = path + "rusted-panels_roughness.png";
+    sphereMesh.albedoTextureFilename = path + "rusted-panels_albedo.png";
+    sphereMesh.heightTextureFilename = path + "rusted-panels_height.png";
+    sphereMesh.aoTextureFilename = path + "rusted-panels_ao.png";
+    sphereMesh.metallicTextureFilename = path + "rusted-panels_metallic.png";
+    sphereMesh.normalTextureFilename = path + "rusted-panels_normal-dx.png";
+    sphereMesh.roughnessTextureFilename = path + "rusted-panels_roughness.png";
 
-    sphereMesh.albedoTextureFilename = path + "steelplate1_albedo.png";
-    sphereMesh.heightTextureFilename = path + "steelplate1_height.png";
-    sphereMesh.aoTextureFilename = path + "steelplate1_ao.png";
-    sphereMesh.metallicTextureFilename = path + "steelplate1_metallic.png";
-    sphereMesh.normalTextureFilename = path + "steelplate1_normal-dx.png";
-    sphereMesh.roughnessTextureFilename = path + "steelplate1_roughness.png";
+    //sphereMesh.albedoTextureFilename = path + "steelplate1_albedo.png";
+    //sphereMesh.heightTextureFilename = path + "steelplate1_height.png";
+    //sphereMesh.aoTextureFilename = path + "steelplate1_ao.png";
+    //sphereMesh.metallicTextureFilename = path + "steelplate1_metallic.png";
+    //sphereMesh.normalTextureFilename = path + "steelplate1_normal-dx.png";
+    //sphereMesh.roughnessTextureFilename = path + "steelplate1_roughness.png";
 
     mMainModel = std::make_shared<Model>();
     // mMainModel->Initialize(mDevice, mContext, triangleMesh);
@@ -118,7 +118,6 @@ bool Engine::Run() {
     constData.vp = constData.proj * constData.view;
 
     D3DUtils::CreateConstantBuffer(mDevice, constData, mConstantBuffer);
-
     MSG msg = {0};
     while (WM_QUIT != msg.message) {
         if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -131,21 +130,15 @@ bool Engine::Run() {
             ImGui_ImplWin32_NewFrame();
 
             ImGui::NewFrame();
-            ImGui::Begin("Scene Control");
+            ImGui::Begin("Settings");
             ImGui::SetWindowPos(ImVec2(0.0f, 0.0f));
             ImGui::SetWindowSize(ImVec2(230, 210));
             ImGui::Text("Average %.3f ms/frame (%.1f FPS)",
                         1000.0f / ImGui::GetIO().Framerate,
                         ImGui::GetIO().Framerate);
 
-            ImGui::SliderFloat("metallic", &mMainModel->mMaterialData.metallic,
-                               0.0f, 1.0f);
-            ImGui::SliderFloat(
-                "roughness", &mMainModel->mMaterialData.roughness, 0.0f, 1.0f);
-
-            ImGui::SliderFloat3("position", &mLight.lightPos.x, -10.0f, 10.0f);
+            ImGui::Checkbox("wireframe", &mRenderManager->mUseWireframe);
             ImGui::SliderFloat2("viewrot", &mViewRot.x, -4.0f, 4.0f);
-            ImGui::SliderFloat("pow", &mLight.pow, 0.0f, 100.0f);
 
             ImGui::End();
 
@@ -163,7 +156,8 @@ bool Engine::Run() {
 }
 
 bool Engine::Update() {
-    D3DUtils::UpdateBuffer(mDevice, mContext, mMainModel->mMaterialData,
+    mMainModel->mPixelConstData.useWireframe = mRenderManager->mUseWireframe;
+    D3DUtils::UpdateBuffer(mDevice, mContext, mMainModel->mPixelConstData,
                            mMainModel->mPixelCB);
     D3DUtils::UpdateBuffer(mDevice, mContext, mLight, mLightBuffer);
 
@@ -184,7 +178,7 @@ bool Engine::Render() {
     std::vector<ID3D11RenderTargetView *> rtvs = {mBackBufferRTV.Get()};
 
     // common states
-    mRenderManager->ClearDSV();
+    mRenderManager->ClearFrame();
 
     mContext->VSSetConstantBuffers(0, 2, cbList.data());
     mContext->PSSetConstantBuffers(0, 2, cbList.data());

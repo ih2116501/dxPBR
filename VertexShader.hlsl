@@ -20,8 +20,8 @@ PSInput main(VSInput vsInput)
     tHeight = tHeight * 2.0 - 1.0;
     float3 posOut = vsInput.pos;
     
-    //posOut += vsInput.normal * tHeight * 0.3f;
-    //psInput.pos = float4(vsInput.pos.xyz, 1.0f);
+    posOut += vsInput.normal * tHeight * 0.2f;
+    psInput.pos = float4(vsInput.pos.xyz, 1.0f);
     psInput.pos = float4(posOut, 1.0f);
 
     float4x4 viewProj = mul(view, proj);

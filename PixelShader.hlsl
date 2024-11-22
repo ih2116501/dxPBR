@@ -13,11 +13,10 @@ Texture2D roughnessTex : register(t14);
 Texture2D emissiveTex : register(t15);
 
 
-cbuffer Material : register(b5)
+cbuffer PixelConstants : register(b5)
 {
-    float cMetallic;
-    float cRoughness;
-    float2 dummyy;
+    int useWireframe;
+    float3 dummyy;
 }
 
 float3 SchlickFresnel(float3 F0, float VdotH)
@@ -62,30 +61,37 @@ float3 AmbientLightingByIBL(float3 albedo, float3 normalW, float3 pixelToEye, fl
 
 float4 main(PSInput psInput) : SV_TARGET
 {
-    float3 tNormal = normalTex.SampleLevel(g_sampler, psInput.tex, 0).rgb;
-    tNormal = 2.0 * tNormal - float3(1.0, 1.0, 1.0); // [-1.0, 1.0]
-    float3 N = psInput.normal;
-    float3 T = normalize(psInput.tangent - dot(psInput.tangent, N) * N);
-    float3 B = cross(N, T);
+    if (useWireframe)
+    {
+        return float4(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+    else
+    {
+        float3 tNormal = normalTex.SampleLevel(g_sampler, psInput.tex, 0).rgb;
+        tNormal = 2.0 * tNormal - float3(1.0, 1.0, 1.0); // [-1.0, 1.0]
+        float3 N = psInput.normal;
+        float3 T = normalize(psInput.tangent - dot(psInput.tangent, N) * N);
+        float3 B = cross(N, T);
         
-    float3x3 TBN = float3x3(T, B, N);
-    float3 normalWorld = normalize(mul(tNormal, TBN));
-    //float3 normalWorld = psInput.normal;
+        float3x3 TBN = float3x3(T, B, N);
+        float3 normalWorld = normalize(mul(tNormal, TBN));
+        //float3 normalWorld = psInput.normal;
 
-    float3 basicColor = float3(0.0f, 0.0f, 0.0f);
-    float3 toLight = normalize(lightPos - psInput.posWorld);
-    float3 toEye = normalize(psInput.eyePos - psInput.posWorld);
-    float3 H = normalize(toEye + toLight);
-    float ndoth = dot(H, psInput.normal);
+        float3 basicColor = float3(0.0f, 0.0f, 0.0f);
+        float3 toLight = normalize(lightPos - psInput.posWorld);
+        float3 toEye = normalize(psInput.eyePos - psInput.posWorld);
+        float3 H = normalize(toEye + toLight);
+        float ndoth = dot(H, psInput.normal);
     
-    // IBL shader
-    float3 albedo = albedoTex.SampleLevel(g_sampler, psInput.tex, 0).rgb;
-    //return float4(albedo, 1.0f);
-    float tmetallic = metallicTex.SampleLevel(g_sampler, psInput.tex, 0).r;
-    float tRoughness = roughnessTex.SampleLevel(g_sampler, psInput.tex, 0).r;
-    float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, toEye, 1.0f, tmetallic, tRoughness, H);
+        // IBL shader
+        float3 albedo = albedoTex.SampleLevel(g_sampler, psInput.tex, 0).rgb;
+        //return float4(albedo, 1.0f);
+        float tmetallic = metallicTex.SampleLevel(g_sampler, psInput.tex, 0).r;
+        float tRoughness = roughnessTex.SampleLevel(g_sampler, psInput.tex, 0).r;
+        float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, toEye, 1.0f, tmetallic, tRoughness, H);
     
-    //return float4(specularIBLTex.SampleLevel(g_sampler, reflect(-toEye, psInput.normal),
-    //                                                        1.5).rgb, 1.0f);
-    return float4(ambientLighting, 1.0);
+        //return float4(specularIBLTex.SampleLevel(g_sampler, reflect(-toEye, psInput.normal),
+        //                                                        1.5).rgb, 1.0f);
+        return float4(ambientLighting, 1.0);
+    }
 }
