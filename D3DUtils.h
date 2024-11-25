@@ -133,6 +133,14 @@ void CreatePixelShader(ComPtr<ID3D11Device> &device,
                        const std::wstring &filename,
                        ComPtr<ID3D11PixelShader> &pixelShader);
 
+void CreateHullShader(ComPtr<ID3D11Device> &device,
+                      const std::wstring &filename,
+                      ComPtr<ID3D11HullShader> &hullShader);
+
+void CreateDomainShader(ComPtr<ID3D11Device> &device,
+                        const std::wstring &filename,
+                        ComPtr<ID3D11DomainShader> &domainShader);
+
 void CreateTexture(ComPtr<ID3D11Device> &device,
                    ComPtr<ID3D11DeviceContext> &context,
                    const std::string &filename,

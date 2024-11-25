@@ -16,14 +16,6 @@ class RenderManager {
     //     obj.Render(mPipelineState);
     // }
 
-    void InitRenderer(ComPtr<ID3D11Device> &device,
-                      ComPtr<ID3D11DeviceContext> &context);
-
-    void InitCubemaps(std::wstring basePath, std::wstring envFilename,
-                      std::wstring specularFilename,
-                      std::wstring irradianceFilename,
-                      std::wstring brdfFilename);
-
     void RenderObjects();
     void RenderSkybox();
     void RenderToneMap();
@@ -55,6 +47,8 @@ class RenderManager {
     ComPtr<ID3D11PixelShader> mPixelShader;
     ComPtr<ID3D11VertexShader> mSkyboxVS;
     ComPtr<ID3D11PixelShader> mSkyboxPS;
+    ComPtr<ID3D11HullShader> mHullShader;
+    ComPtr<ID3D11DomainShader> mDomainShader;
     ComPtr<ID3D11InputLayout> mSkyboxIL;
     ComPtr<ID3D11InputLayout> mInputLayout;
     ComPtr<ID3D11InputLayout> mScreenIL;

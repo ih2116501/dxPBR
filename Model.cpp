@@ -11,12 +11,29 @@ Model::~Model() { std::cout << "model closed\n"; }
 
 void Model::Initialize(ComPtr<ID3D11Device> &device,
                        ComPtr<ID3D11DeviceContext> &context,
-                       MeshData &meshData) {
+                       std::vector<MeshData> &meshes) {
     // ObjectType = DEFAULT_MODEL;
+    CreateSamplers(device);
+    CreateMeshes(device, context, meshes);
+    mPixelConstData.useWireframe = 0;
+    D3DUtils::CreateConstantBuffer(device, mPixelConstData, mPixelCB);
+}
+
+void Model::Initialize(ComPtr<ID3D11Device> &device,
+                       ComPtr<ID3D11DeviceContext> &context,
+                       MeshData &meshData) {
+    CreateSamplers(device);
+    Mesh newMesh;
+    // D3DUtils::CreateTexture(device, "d", texture, textureSRV);
+    CreateMesh(device, context, meshData);
+    mPixelConstData.useWireframe = 0;
+    D3DUtils::CreateConstantBuffer(device, mPixelConstData, mPixelCB);
+}
+
+void Model::CreateSamplers(ComPtr<ID3D11Device> &device) {
     D3D11_SAMPLER_DESC sampDesc;
     ZeroMemory(&sampDesc, sizeof(sampDesc));
     sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    // sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
     sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
     sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -24,13 +41,29 @@ void Model::Initialize(ComPtr<ID3D11Device> &device,
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
     device->CreateSamplerState(&sampDesc, mSamplerState.GetAddressOf());
+    mSamplerList.push_back(mSamplerState.Get());
 
     sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
     sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
     sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
     device->CreateSamplerState(&sampDesc, mClampSampler.GetAddressOf());
-    mSamplerList.push_back(mSamplerState.Get());
     mSamplerList.push_back(mClampSampler.Get());
+}
+
+void Model::UpdateConstantBuffers(ComPtr<ID3D11Device> &device,
+                                  ComPtr<ID3D11DeviceContext> &context) {}
+
+void Model::CreateMeshes(ComPtr<ID3D11Device> &device,
+                         ComPtr<ID3D11DeviceContext> &context,
+                         std::vector<MeshData> &meshes) {
+    for (auto &meshData : meshes) {
+        this->CreateMesh(device, context, meshData);
+    }
+}
+
+void Model::CreateMesh(ComPtr<ID3D11Device> &device,
+                       ComPtr<ID3D11DeviceContext> &context,
+                       MeshData &meshData) {
     Mesh newMesh;
 
     // D3DUtils::CreateTexture(device, "d", texture, textureSRV);
@@ -71,36 +104,41 @@ void Model::Initialize(ComPtr<ID3D11Device> &device,
                                 meshData.roughnessTextureFilename,
                                 newMesh.roughnessTexture, newMesh.roughnessSRV);
     }
-
-    mResViews = {newMesh.albedoSRV.Get(),    newMesh.normalSRV.Get(),
-                 newMesh.aoSRV.Get(),        newMesh.metallicSRV.Get(),
-                 newMesh.roughnessSRV.Get(), newMesh.emissiveSRV.Get()};
+    if (!meshData.metallicRoughnessFilename.empty()) {
+        mPixelConstData.useMetallicRoughness = 1;
+        D3DUtils::CreateTexture(
+            device, context, meshData.metallicRoughnessFilename,
+            newMesh.metallicRoughnessTexture, newMesh.metallicRoughnessSRV);
+    }
 
     D3DUtils::CreateVertexBuffer(device, meshData.vertices,
                                  newMesh.mVertexBuffer);
     D3DUtils::CreateIndexBuffer(device, meshData.indices, newMesh.mIndexBuffer);
     newMesh.indexCount = meshData.indices.size();
     mMeshes.push_back(newMesh);
-    mPixelConstData.useWireframe = 0;
-    D3DUtils::CreateConstantBuffer(device, mPixelConstData, mPixelCB);
 }
 
-void Model::UpdateConstantBuffers(ComPtr<ID3D11Device> &device,
-                                  ComPtr<ID3D11DeviceContext> &context) {}
-
 void Model::Render(ComPtr<ID3D11DeviceContext> &context) {
-    const std::vector<ID3D11ShaderResourceView *> psNullSRVs(mResViews.size(),
-                                                             nullptr);
-    const std::vector<ID3D11ShaderResourceView *> vsNullSRVs(1, nullptr);
 
-    for (int i = 0; i < mMeshes.size(); i++) {
-        ID3D11ShaderResourceView *vsSRVs[1] = {mMeshes[i].heightSRV.Get()};
+    // for (int i = 0; i < mMeshes.size(); i++) {
+    for (auto &mesh : mMeshes) {
+        ID3D11ShaderResourceView *vsSRVs[1] = {mesh.heightSRV.Get()};
+        mResViews = {mesh.albedoSRV.Get(),
+                     mesh.normalSRV.Get(),
+                     mesh.aoSRV.Get(),
+                     mesh.metallicSRV.Get(),
+                     mesh.roughnessSRV.Get(),
+                     mesh.emissiveSRV.Get(),
+                     mesh.metallicRoughnessSRV.Get()};
 
-        context->IASetIndexBuffer(mMeshes[i].mIndexBuffer.Get(),
-                                  DXGI_FORMAT_R32_UINT, 0);
-        context->IASetVertexBuffers(0, 1,
-                                    mMeshes[i].mVertexBuffer.GetAddressOf(),
-                                    &mMeshes[i].stride, &mMeshes[i].offset);
+        const std::vector<ID3D11ShaderResourceView *> psNullSRVs(
+            mResViews.size(), nullptr);
+        const std::vector<ID3D11ShaderResourceView *> vsNullSRVs(1, nullptr);
+
+        context->IASetIndexBuffer(mesh.mIndexBuffer.Get(), DXGI_FORMAT_R32_UINT,
+                                  0);
+        context->IASetVertexBuffers(0, 1, mesh.mVertexBuffer.GetAddressOf(),
+                                    &mesh.stride, &mesh.offset);
         context->VSSetShaderResources(0, 1, vsSRVs);
         context->VSSetSamplers(0, mSamplerList.size(), mSamplerList.data());
         context->PSSetSamplers(0, mSamplerList.size(), mSamplerList.data());
@@ -108,7 +146,7 @@ void Model::Render(ComPtr<ID3D11DeviceContext> &context) {
         context->PSSetShaderResources(10, mResViews.size(), mResViews.data());
         context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        context->DrawIndexed(mMeshes[i].indexCount, 0, 0);
+        context->DrawIndexed(mesh.indexCount, 0, 0);
 
         // unbinding
         context->VSSetShaderResources(0, vsNullSRVs.size(), vsNullSRVs.data());

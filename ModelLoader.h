@@ -19,10 +19,10 @@ class ModelLoader {
     std::string ReadFilename(aiMaterial *material, aiTextureType type);
 
     void UpdateTangents();
-
+    std::vector<MeshData> GetMeshes() const;
   public:
     std::string basePath;
-    std::vector<MeshData> meshes;
-    bool m_isGLTF = false; // gltf or fbx
+    std::vector<MeshData> mMeshes;
+    bool m_isGLTF = false;
     bool m_revertNormals = false;
 };

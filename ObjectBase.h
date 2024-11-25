@@ -28,7 +28,11 @@ class ObjectBase {
 
     virtual void Initialize(ComPtr<ID3D11Device> &device,
                             ComPtr<ID3D11DeviceContext> &context,
-                            MeshData &meshData) = 0;
+                            std::vector<MeshData> &meshes) = 0;
+
+    virtual void Initialize(ComPtr<ID3D11Device> &device,
+                            ComPtr<ID3D11DeviceContext> &context,
+                            MeshData &meshes) = 0;
     virtual void
     UpdateConstantBuffers(ComPtr<ID3D11Device> &device,
                           ComPtr<ID3D11DeviceContext> &context) = 0;

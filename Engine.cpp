@@ -1,6 +1,7 @@
 #include "Engine.h"
 #include "D3DUtils.h"
 #include "GeometryGenerator.h"
+#include "ModelLoader.h"
 #include "Pipeline.h"
 #include <DirectXMath.h>
 #include <directxtk/SimpleMath.h>
@@ -75,6 +76,7 @@ bool Engine::Run() {
     // MeshData triangleMesh = GeometryGenerator::CreateTriangle();
     MeshData sphereMesh =
         GeometryGenerator::CreateSphere(10, 10, Vector2(2.0f, 1.0f));
+
     // MeshData box = GeometryGenerator::CreateBox(0.5f);
     std::string path = "./Assets/Textures/PBRTextures/";
     sphereMesh.albedoTextureFilename = path + "rusted-panels_albedo.png";
@@ -84,16 +86,24 @@ bool Engine::Run() {
     sphereMesh.normalTextureFilename = path + "rusted-panels_normal-dx.png";
     sphereMesh.roughnessTextureFilename = path + "rusted-panels_roughness.png";
 
-    //sphereMesh.albedoTextureFilename = path + "steelplate1_albedo.png";
-    //sphereMesh.heightTextureFilename = path + "steelplate1_height.png";
-    //sphereMesh.aoTextureFilename = path + "steelplate1_ao.png";
-    //sphereMesh.metallicTextureFilename = path + "steelplate1_metallic.png";
-    //sphereMesh.normalTextureFilename = path + "steelplate1_normal-dx.png";
-    //sphereMesh.roughnessTextureFilename = path + "steelplate1_roughness.png";
+    // sphereMesh.albedoTextureFilename = path + "steelplate1_albedo.png";
+    // sphereMesh.heightTextureFilename = path + "steelplate1_height.png";
+    // sphereMesh.aoTextureFilename = path + "steelplate1_ao.png";
+    // sphereMesh.metallicTextureFilename = path + "steelplate1_metallic.png";
+    // sphereMesh.normalTextureFilename = path + "steelplate1_normal-dx.png";
+    // sphereMesh.roughnessTextureFilename = path + "steelplate1_roughness.png";
 
     mMainModel = std::make_shared<Model>();
     // mMainModel->Initialize(mDevice, mContext, triangleMesh);
-    mMainModel->Initialize(mDevice, mContext, sphereMesh);
+
+    std::string modelPath = "./Assets/DamagedHelmet/";
+    ModelLoader modelLoader;
+    modelLoader.Load(modelPath, "DamagedHelmet.gltf", false);
+    std::vector<MeshData> md;
+    md = modelLoader.GetMeshes();
+
+    //mMainModel->Initialize(mDevice, mContext, sphereMesh);
+    mMainModel->Initialize(mDevice, mContext, md);
     // this->objList.push_back(mMainModel);
 
     MeshData skyBoxMesh = GeometryGenerator::CreateBox(30.0f);

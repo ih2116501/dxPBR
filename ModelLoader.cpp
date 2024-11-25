@@ -74,8 +74,6 @@ void ModelLoader::Load(std::string basePath, std::string filename,
         ProcessNode(pScene->mRootNode, pScene, tr);
     }
 
-    // UpdateNormals(this->meshes);
-
     UpdateTangents();
 }
 
@@ -84,7 +82,7 @@ void ModelLoader::UpdateTangents() {
     using namespace std;
     using namespace DirectX;
 
-    for (auto &m : this->meshes) {
+    for (auto &m : this->mMeshes) {
 
         vector<XMFLOAT3> positions(m.vertices.size());
         vector<XMFLOAT3> normals(m.vertices.size());
@@ -110,11 +108,9 @@ void ModelLoader::UpdateTangents() {
     }
 }
 
+std::vector<MeshData> ModelLoader::GetMeshes() const { return this->mMeshes; }
+
 void ModelLoader::ProcessNode(aiNode *node, const aiScene *scene, Matrix tr) {
-
-    // std::cout << node->mName.C_Str() << " : " << node->mNumMeshes << " "
-    //           << node->mNumChildren << std::endl;
-
     Matrix m;
     ai_real *temp = &node->mTransformation.a1;
     float *mTemp = &m._11;
@@ -131,8 +127,8 @@ void ModelLoader::ProcessNode(aiNode *node, const aiScene *scene, Matrix tr) {
         for (auto &v : newMesh.vertices) {
             v.position = DirectX::SimpleMath::Vector3::Transform(v.position, m);
         }
-        
-        meshes.push_back(newMesh);
+
+        this->mMeshes.push_back(newMesh);
     }
 
     for (UINT i = 0; i < node->mNumChildren; i++) {
@@ -148,8 +144,7 @@ string ModelLoader::ReadFilename(aiMaterial *material, aiTextureType type) {
 
         std::string fullPath =
             this->basePath +
-            std::string(
-                filesystem::path(filepath.C_Str()).filename().string());
+            std::string(filesystem::path(filepath.C_Str()).filename().string());
 
         return fullPath;
     } else {
@@ -159,11 +154,9 @@ string ModelLoader::ReadFilename(aiMaterial *material, aiTextureType type) {
 
 MeshData ModelLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene) {
 
-    // Data to fill
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 
-    // Walk through each of the mesh's vertices
     for (UINT i = 0; i < mesh->mNumVertices; i++) {
         Vertex vertex;
 
@@ -225,19 +218,15 @@ MeshData ModelLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene) {
             ReadFilename(material, aiTextureType_METALNESS);
         newMesh.roughnessTextureFilename =
             ReadFilename(material, aiTextureType_DIFFUSE_ROUGHNESS);
-
+        //aiTextureType_UNKNOWN
         newMesh.aoTextureFilename =
             ReadFilename(material, aiTextureType_AMBIENT_OCCLUSION);
+        newMesh.metallicRoughnessFilename =
+            ReadFilename(material, aiTextureType_UNKNOWN);
         if (newMesh.aoTextureFilename.empty()) {
             newMesh.aoTextureFilename =
                 ReadFilename(material, aiTextureType_LIGHTMAP);
         }
-
-        // µð¹ö±ë¿ë
-        // for (size_t i = 0; i < 22; i++) {
-        //    cout << i << " " << ReadFilename(material, aiTextureType(i))
-        //         << endl;
-        //}
     }
 
     return newMesh;

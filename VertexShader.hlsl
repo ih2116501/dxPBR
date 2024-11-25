@@ -16,11 +16,11 @@ PSInput main(VSInput vsInput)
     PSInput psInput;
     psInput.normal = normalize(vsInput.normal);
 
-    float tHeight = heightTexture.SampleLevel(g_sampler, vsInput.tex, 0).r;
-    tHeight = tHeight * 2.0 - 1.0;
+    //float tHeight = heightTexture.SampleLevel(g_sampler, vsInput.tex, 0).r;
+    //tHeight = tHeight * 2.0 - 1.0;
     float3 posOut = vsInput.pos;
     
-    posOut += vsInput.normal * tHeight * 0.2f;
+    //posOut += vsInput.normal * tHeight * 0.2f;
     psInput.pos = float4(vsInput.pos.xyz, 1.0f);
     psInput.pos = float4(posOut, 1.0f);
 

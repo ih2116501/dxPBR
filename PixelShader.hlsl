@@ -11,12 +11,14 @@ Texture2D aoTex : register(t12);
 Texture2D metallicTex : register(t13);
 Texture2D roughnessTex : register(t14);
 Texture2D emissiveTex : register(t15);
+Texture2D metallicRoughnessTex : register(t16);
 
 
 cbuffer PixelConstants : register(b5)
 {
     int useWireframe;
-    float3 dummyy;
+    int useMetallicRoughnessTex;
+    float2 dummyy;
 }
 
 float3 SchlickFresnel(float3 F0, float VdotH)
@@ -86,12 +88,25 @@ float4 main(PSInput psInput) : SV_TARGET
         // IBL shader
         float3 albedo = albedoTex.SampleLevel(g_sampler, psInput.tex, 0).rgb;
         //return float4(albedo, 1.0f);
-        float tmetallic = metallicTex.SampleLevel(g_sampler, psInput.tex, 0).r;
-        float tRoughness = roughnessTex.SampleLevel(g_sampler, psInput.tex, 0).r;
-        float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, toEye, 1.0f, tmetallic, tRoughness, H);
+        float tMetallic = 0;
+        float tRoughness = 0;
+        
+        if (useMetallicRoughnessTex == 0)
+        {
+            tMetallic = metallicTex.SampleLevel(g_sampler, psInput.tex, 0).r;
+            tRoughness = roughnessTex.SampleLevel(g_sampler, psInput.tex, 0).r;
+        }
+        else
+        {
+            tMetallic = metallicRoughnessTex.SampleLevel(g_sampler, psInput.tex, 0).b;
+            tRoughness = metallicRoughnessTex.SampleLevel(g_sampler, psInput.tex, 0).g;
+        }
+       
+        float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, toEye, 1.0f, tMetallic, tRoughness, H);
     
         //return float4(specularIBLTex.SampleLevel(g_sampler, reflect(-toEye, psInput.normal),
         //                                                        1.5).rgb, 1.0f);
-        return float4(ambientLighting, 1.0);
+        float3 emissive = emissiveTex.Sample(g_sampler, psInput.tex);
+        return float4(ambientLighting + emissive, 1.0);
     }
 }

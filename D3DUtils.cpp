@@ -318,6 +318,32 @@ void D3DUtils::CreatePixelShader(ComPtr<ID3D11Device> &device,
                                             pixelShader.GetAddressOf()));
 }
 
+void D3DUtils::CreateHullShader(ComPtr<ID3D11Device> &device,
+                                 const std::wstring &filename,
+                                 ComPtr<ID3D11HullShader> &hullShader) {
+
+    ComPtr<ID3DBlob> shaderBlob;
+    ComPtr<ID3DBlob> errorBlob;
+    CompileShader(filename, "hs_5_0", shaderBlob, errorBlob);
+
+    ThrowIfFailed(device->CreateHullShader(shaderBlob->GetBufferPointer(),
+                                            shaderBlob->GetBufferSize(), NULL,
+                                            hullShader.GetAddressOf()));
+}
+
+void D3DUtils::CreateDomainShader(ComPtr<ID3D11Device> &device,
+                                const std::wstring &filename,
+                                ComPtr<ID3D11DomainShader> &domainShader) {
+
+    ComPtr<ID3DBlob> shaderBlob;
+    ComPtr<ID3DBlob> errorBlob;
+    CompileShader(filename, "hs_5_0", shaderBlob, errorBlob);
+
+    ThrowIfFailed(device->CreateDomainShader(shaderBlob->GetBufferPointer(),
+                                           shaderBlob->GetBufferSize(), NULL,
+                                           domainShader.GetAddressOf()));
+}
+
 void D3DUtils::CreateTexture(ComPtr<ID3D11Device> &device,
                              ComPtr<ID3D11DeviceContext> &context,
                              const std::string &filename,

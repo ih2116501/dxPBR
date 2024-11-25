@@ -30,6 +30,7 @@ struct MeshData {
     std::string normalTextureFilename;
     std::string metallicTextureFilename;
     std::string roughnessTextureFilename;
+    std::string metallicRoughnessFilename;
 };
 
 struct Mesh {
@@ -43,6 +44,7 @@ struct Mesh {
     ComPtr<ID3D11Texture2D> aoTexture;
     ComPtr<ID3D11Texture2D> metallicTexture;
     ComPtr<ID3D11Texture2D> roughnessTexture;
+    ComPtr<ID3D11Texture2D> metallicRoughnessTexture;
 
     ComPtr<ID3D11ShaderResourceView> albedoSRV;
     ComPtr<ID3D11ShaderResourceView> emissiveSRV;
@@ -51,6 +53,7 @@ struct Mesh {
     ComPtr<ID3D11ShaderResourceView> aoSRV;
     ComPtr<ID3D11ShaderResourceView> metallicSRV;
     ComPtr<ID3D11ShaderResourceView> roughnessSRV;
+    ComPtr<ID3D11ShaderResourceView> metallicRoughnessSRV;
 
     UINT indexCount = 0;
     UINT vertexCount = 0;
