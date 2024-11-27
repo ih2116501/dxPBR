@@ -18,8 +18,18 @@ float3 LinearToneMapping(float3 color)
     float3 invGamma = float3(1, 1, 1) / 2.2f;
 
     color = pow(color, invGamma);
-    color = clamp(1.0 * color, 0., 1.);
+    color = saturate(color);
     return color;
+}
+
+float3 ACESFilm(float3 color)
+{
+    float a = 2.51f;
+    float b = 0.03f;
+    float c = 2.43f;
+    float d = 0.59f;
+    float e = 0.14f;
+    return saturate((color * (a * color + b)) / (color * (c * color + d) + e));
 }
 
 float3 Uncharted2ToneMapping(float3 color)
@@ -52,7 +62,7 @@ float3 lumaBasedReinhardToneMapping(float3 color)
 
 float3 FilmicToneMapping(float3 color)
 {
-    color = max(float3(0, 0, 0), color);
+    //color = max(float3(0, 0, 0), color);
     color = (color * (6.2 * color + .5)) / (color * (6.2 * color + 1.7) + 0.06);
     return color;
 }
@@ -62,6 +72,9 @@ float4 main(PSIn psInput) : SV_TARGET
     float4 color = screenTex.Sample(g_sampler, psInput.tex);
     //return float4(Uncharted2ToneMapping(color.rgb), 1.0f);
     //return float4(LinearToneMapping(color.rgb), 1.0f);
-    return float4(FilmicToneMapping(color.rgb), 1.0f);
+    float green = color.g / 3;
+    color.g += green;
+
+    return float4(FilmicToneMapping(color.rgb ), 1.0f);
     //return float4(lumaBasedReinhardToneMapping(color.rgb), 1.0f);
 }

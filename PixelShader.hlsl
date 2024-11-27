@@ -70,7 +70,9 @@ float4 main(PSInput psInput) : SV_TARGET
     else
     {
         float3 tNormal = normalTex.SampleLevel(g_sampler, psInput.tex, 0).rgb;
+        //tNormal.y = -tNormal.y;
         tNormal = 2.0 * tNormal - float3(1.0, 1.0, 1.0); // [-1.0, 1.0]
+        
         float3 N = psInput.normal;
         float3 T = normalize(psInput.tangent - dot(psInput.tangent, N) * N);
         float3 B = cross(N, T);
@@ -85,7 +87,6 @@ float4 main(PSInput psInput) : SV_TARGET
         float3 H = normalize(toEye + toLight);
         float ndoth = dot(H, psInput.normal);
     
-        // IBL shader
         float3 albedo = albedoTex.SampleLevel(g_sampler, psInput.tex, 0).rgb;
         //return float4(albedo, 1.0f);
         float tMetallic = 0;
@@ -101,12 +102,9 @@ float4 main(PSInput psInput) : SV_TARGET
             tMetallic = metallicRoughnessTex.SampleLevel(g_sampler, psInput.tex, 0).b;
             tRoughness = metallicRoughnessTex.SampleLevel(g_sampler, psInput.tex, 0).g;
         }
-       
-        float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, toEye, 1.0f, tMetallic, tRoughness, H);
-    
-        //return float4(specularIBLTex.SampleLevel(g_sampler, reflect(-toEye, psInput.normal),
-        //                                                        1.5).rgb, 1.0f);
+        float ao = aoTex.Sample(g_sampler, psInput.tex).r;
+        float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, toEye, ao, tMetallic, tRoughness, H);
         float3 emissive = emissiveTex.Sample(g_sampler, psInput.tex);
-        return float4(ambientLighting + emissive, 1.0);
+        return float4(ambientLighting + emissive*2.0, 1.0);
     }
 }

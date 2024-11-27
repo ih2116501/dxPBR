@@ -12,7 +12,8 @@ using namespace DirectX::SimpleMath;
 Engine::Engine()
     : mMainWindow(0), mScreenWidth(1280), mScreenHeight(720), mDevice(nullptr),
       mContext(nullptr), mSwapChain(nullptr), mBackBufferRTV(nullptr),
-      mViewRot(Vector2(0.0f)), mViewport({}) {
+      mViewRot(Vector2(0.0f)), mViewport({}), mPrevMouseXY(Vector2(0.0f, 0.0f)),
+      dMouse(Vector2(0.0f)), prevAxis(Vector3(0.0f)) {
     mGUIManager = std::make_shared<GUIManager>(mScreenWidth, mScreenHeight);
     mRenderManager =
         std::make_shared<RenderManager>(mScreenWidth, mScreenHeight);
@@ -64,6 +65,23 @@ bool Engine::InitEngine() {
 
     mRenderManager->InitRenderer(mDevice, mContext, mSwapChain);
 
+    // init constant buffer
+    constData.proj = DirectX::XMMatrixPerspectiveFovLH(
+        DirectX::XMConvertToRadians(80.0), float(mScreenWidth) / mScreenHeight,
+        0.01f,
+        100.0f); // todo : move to camera::set
+
+    constData.proj = constData.proj.Transpose();
+    mEyePos = Vector3(0.0f, 0.0f, -3.0f);
+
+    constData.view = Matrix::CreateRotationX(mViewRot.x) *
+                     Matrix::CreateRotationY(mViewRot.y) *
+                     Matrix::CreateTranslation(-mEyePos);
+    constData.eyePos = Vector3::Transform(mEyePos, constData.view.Invert());
+    constData.view = constData.view.Transpose();
+    constData.vp = constData.proj * constData.view;
+
+    D3DUtils::CreateConstantBuffer(mDevice, constData, mConstantBuffer);
     return ret;
 }
 
@@ -101,8 +119,8 @@ bool Engine::Run() {
     modelLoader.Load(modelPath, "DamagedHelmet.gltf", false);
     std::vector<MeshData> md;
     md = modelLoader.GetMeshes();
-
-    //mMainModel->Initialize(mDevice, mContext, sphereMesh);
+    GeometryGenerator::NormalizeMesh(md, 3.0f);
+    // mMainModel->Initialize(mDevice, mContext, sphereMesh);
     mMainModel->Initialize(mDevice, mContext, md);
     // this->objList.push_back(mMainModel);
 
@@ -111,23 +129,6 @@ bool Engine::Run() {
     mSkyBox->Initialize(mDevice, mContext, skyBoxMesh);
     this->objList.push_back(mSkyBox);
 
-    // init constant buffer
-    constData.proj = DirectX::XMMatrixPerspectiveFovLH(
-        DirectX::XMConvertToRadians(80.0), float(mScreenWidth) / mScreenHeight,
-        0.01f,
-        100.0f); // todo : move to camera::set
-
-    constData.proj = constData.proj.Transpose();
-    mEyePos = Vector3(0.0f, 0.0f, -3.0f);
-
-    constData.view = Matrix::CreateRotationX(mViewRot.x) *
-                     Matrix::CreateRotationY(mViewRot.y) *
-                     Matrix::CreateTranslation(-mEyePos);
-    constData.eyePos = Vector3::Transform(mEyePos, constData.view.Invert());
-    constData.view = constData.view.Transpose();
-    constData.vp = constData.proj * constData.view;
-
-    D3DUtils::CreateConstantBuffer(mDevice, constData, mConstantBuffer);
     MSG msg = {0};
     while (WM_QUIT != msg.message) {
         if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -148,7 +149,7 @@ bool Engine::Run() {
                         ImGui::GetIO().Framerate);
 
             ImGui::Checkbox("wireframe", &mRenderManager->mUseWireframe);
-            ImGui::SliderFloat2("viewrot", &mViewRot.x, -4.0f, 4.0f);
+            // ImGui::SliderFloat2("viewrot", &mViewRot.x, -4.0f, 4.0f);
 
             ImGui::End();
 
@@ -167,20 +168,63 @@ bool Engine::Run() {
 
 bool Engine::Update() {
     mMainModel->mPixelConstData.useWireframe = mRenderManager->mUseWireframe;
+
     D3DUtils::UpdateBuffer(mDevice, mContext, mMainModel->mPixelConstData,
                            mMainModel->mPixelCB);
     D3DUtils::UpdateBuffer(mDevice, mContext, mLight, mLightBuffer);
+    
+    Vector2 currentMouseXY;
+    constData.view = constData.view.Transpose();
+    Matrix prevView = constData.view;
+    if (mGUIManager->mLButtonDown) {
+        if (mGUIManager->mLDragStart) {
+            mGUIManager->mLDragStart = false;
+            mPrevMouseXY = Vector2(float(mGUIManager->mMouseX),
+                                   float(mGUIManager->mMouseY));
+        } else {
+            Vector3 axisZ = Vector3(0.0f, 0.0f, 1.0f);
+            currentMouseXY = Vector2(float(mGUIManager->mMouseX),
+                                     float(mGUIManager->mMouseY));
+            dMouse = (mPrevMouseXY - currentMouseXY);
 
-    constData.view = Matrix::CreateRotationX(mViewRot.x) *
-                     Matrix::CreateRotationY(mViewRot.y) *
-                     Matrix::CreateTranslation(-mEyePos);
+            //if (mGUIManager->mMouseMove) {
+
+                Vector3 rotAxis =
+                    axisZ.Cross(Vector3(dMouse.x / 100, -dMouse.y / 100, 0.0f));
+                if (rotAxis != DirectX::XMVectorZero())
+                    constData.view *=
+                        Matrix::CreateTranslation(mEyePos) *
+                        Matrix::CreateFromAxisAngle(rotAxis, 0.05f) *
+                        Matrix::CreateTranslation(-mEyePos);
+            //}
+            mPrevMouseXY = currentMouseXY;
+        }
+    }
     constData.eyePos = Vector3::Transform(mEyePos, constData.view.Invert());
     constData.view = constData.view.Transpose();
     constData.vp = constData.proj * constData.view;
 
     D3DUtils::UpdateBuffer(mDevice, mContext, constData, mConstantBuffer);
+    mGUIManager->mMouseMove = false;
     return true;
 }
+
+//bool Engine::Update() {
+//    mMainModel->mPixelConstData.useWireframe = mRenderManager->mUseWireframe;
+//    D3DUtils::UpdateBuffer(mDevice, mContext, mMainModel->mPixelConstData,
+//                           mMainModel->mPixelCB);
+//    D3DUtils::UpdateBuffer(mDevice, mContext, mLight, mLightBuffer);
+//
+//    constData.view = Matrix::CreateRotationX(mViewRot.x) *
+//                     Matrix::CreateRotationY(mViewRot.y) *
+//                     Matrix::CreateTranslation(-mEyePos);
+//    constData.eyePos = Vector3::Transform(mEyePos, constData.view.Invert());
+//    constData.view = constData.view.Transpose();
+//    constData.vp = constData.proj * constData.view;
+//
+//    D3DUtils::UpdateBuffer(mDevice, mContext, constData, mConstantBuffer);
+//    return true;
+//}
 
 bool Engine::Render() {
     std::vector<ID3D11Buffer *> cbList = {mConstantBuffer.Get(),
@@ -200,9 +244,6 @@ bool Engine::Render() {
     // render skybox
     mRenderManager->RenderSkybox();
     mSkyBox->Render(mContext);
-
-    // tonemapping
-    // mRenderManager->RenderToneMap();
 
     // render screen
     mRenderManager->RenderScreen();

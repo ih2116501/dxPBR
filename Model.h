@@ -25,16 +25,17 @@ class Model : ObjectBase {
     void Initialize(ComPtr<ID3D11Device> &device,
                     ComPtr<ID3D11DeviceContext> &context,
                     MeshData &meshData) override;
-
+    void CreateSamplers(ComPtr<ID3D11Device> &device);
+    void CreateMeshes(ComPtr<ID3D11Device> &device,
+                      ComPtr<ID3D11DeviceContext> &context,
+                      std::vector<MeshData> &meshes);
+    void CreateMesh(ComPtr<ID3D11Device> &device,
+                    ComPtr<ID3D11DeviceContext> &context, MeshData &meshData);
+    
     void UpdateConstantBuffers(ComPtr<ID3D11Device> &device,
                                ComPtr<ID3D11DeviceContext> &context) override;
 
     void Render(ComPtr<ID3D11DeviceContext> &context) override;
-    void CreateMeshes(ComPtr<ID3D11Device> &device,
-                      ComPtr<ID3D11DeviceContext> &context, std::vector<MeshData> &meshes);
-    void CreateMesh(ComPtr<ID3D11Device> & device,
-                     ComPtr<ID3D11DeviceContext> &context, MeshData &meshData);
-    void CreateSamplers(ComPtr<ID3D11Device> &device);
 
     ComPtr<ID3DBlob> vsBlob;
     ComPtr<ID3DBlob> psBlob;

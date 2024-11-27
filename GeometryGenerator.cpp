@@ -97,10 +97,11 @@ MeshData GeometryGenerator::CreateSphere(uint32_t numStacks, uint32_t numSlices,
             v.texcoord =
                 Vector2(float(i) / numSlices, 1.0f - float(j) / numStacks) *
                 texScale;
-            //v.texcoord =
-                //Vector2(float(i) / numSlices, 1 - (v.position.y + radius)/(2*radius)) * texScale;
+            // v.texcoord =
+            // Vector2(float(i) / numSlices, 1 - (v.position.y +
+            // radius)/(2*radius)) * texScale;
 
-            Vector3 biTangent = Vector3(0.0f, -1.0f, 0.0f); 
+            Vector3 biTangent = Vector3(0.0f, -1.0f, 0.0f);
 
             Vector3 normalOrth = v.normal - biTangent.Dot(v.normal) * biTangent;
             biTangent = biTangent - biTangent.Dot(v.normal) * v.normal;
@@ -270,9 +271,32 @@ MeshData GeometryGenerator::CreateBox(float scale = 1.0f) {
     return meshData;
 }
 
-MeshData GeometryGenerator::ReadFromFile(std::wstring filename) {
-    MeshData meshData;
-    Vertex v;
+void GeometryGenerator::NormalizeMesh(std::vector<MeshData> &meshes,
+                                      float scale) {
+    Vector3 vmin(1000);
+    Vector3 vmax(-1000);
+    for (auto &mesh : meshes) {
+        for (auto &v : mesh.vertices) {
+            vmin.x = v.position.x < vmin.x ? v.position.x : vmin.x;
+            vmin.y = v.position.y < vmin.y ? v.position.y : vmin.y;
+            vmin.z = v.position.z < vmin.z ? v.position.z : vmin.z;
 
-    return meshData;
+            vmax.x = v.position.x > vmax.x ? v.position.x : vmax.x;
+            vmax.y = v.position.y > vmax.y ? v.position.y : vmax.y;
+            vmax.z = v.position.z > vmax.z ? v.position.z : vmax.z;
+        }
+    }
+    float dx = vmax.x - vmin.x;
+    float dy = vmax.y - vmin.y;
+    float dz = vmax.z - vmin.z;
+
+    float maxD = dx > dy ? (dx > dz ? dx : dz) : (dy > dz ? dy : dz);
+    Vector3 center = Vector3((vmax.x + vmin.x) * 0.5, (vmax.y + vmin.y) * 0.5,
+                             (vmax.z + vmin.z) * 0.5);
+
+    for (auto &mesh : meshes) {
+        for (auto &v : mesh.vertices) {
+            v.position = ((v.position - center) / maxD) * scale;
+        }
+    }
 }

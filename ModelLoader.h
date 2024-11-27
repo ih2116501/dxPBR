@@ -17,7 +17,7 @@ class ModelLoader {
     MeshData ProcessMesh(aiMesh *mesh, const aiScene *scene);
 
     std::string ReadFilename(aiMaterial *material, aiTextureType type);
-
+    
     void UpdateTangents();
     std::vector<MeshData> GetMeshes() const;
   public:

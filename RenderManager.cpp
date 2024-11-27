@@ -198,6 +198,7 @@ void RenderManager::ClearFrame() {
 void RenderManager::RenderObjects() {
     mContext->OMSetDepthStencilState(mDSS.Get(), 0);
     mContext->OMSetRenderTargets(1, mFloatRTV.GetAddressOf(), mDSV.Get());
+    //mContext->OMSetRenderTargets(1, mFloatRTV.GetAddressOf(), mDSV.Get());
 
     mBasicPipeline.SetPipeline(mContext);
 }

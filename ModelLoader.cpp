@@ -50,7 +50,7 @@ string GetExtension(const string filename) {
     return ext;
 }
 
-void ModelLoader::Load(std::string basePath, std::string filename,
+void ModelLoader::Load(std::string basePath, std::string filename, 
                        bool revertNormals) {
 
     if (GetExtension(filename) == ".gltf") {

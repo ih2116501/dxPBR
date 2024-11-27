@@ -22,7 +22,7 @@ struct MeshData {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
     std::vector<uint8_t> colors;
-
+     
     std::string emissiveTextureFilename;
     std::string albedoTextureFilename;
     std::string aoTextureFilename;

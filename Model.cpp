@@ -108,12 +108,12 @@ void Model::CreateMesh(ComPtr<ID3D11Device> &device,
         mPixelConstData.useMetallicRoughness = 1;
         D3DUtils::CreateTexture(
             device, context, meshData.metallicRoughnessFilename,
-            newMesh.metallicRoughnessTexture, newMesh.metallicRoughnessSRV);
+            newMesh.metallicRoughnessTexture, newMesh.metallicRoughnessSRV); 
     }
 
     D3DUtils::CreateVertexBuffer(device, meshData.vertices,
                                  newMesh.mVertexBuffer);
-    D3DUtils::CreateIndexBuffer(device, meshData.indices, newMesh.mIndexBuffer);
+    D3DUtils::CreateIndexBuffer(device, meshData.indices, newMesh.mIndexBuffer); 
     newMesh.indexCount = meshData.indices.size();
     mMeshes.push_back(newMesh);
 }
@@ -125,7 +125,7 @@ void Model::Render(ComPtr<ID3D11DeviceContext> &context) {
         ID3D11ShaderResourceView *vsSRVs[1] = {mesh.heightSRV.Get()};
         mResViews = {mesh.albedoSRV.Get(),
                      mesh.normalSRV.Get(),
-                     mesh.aoSRV.Get(),
+                     mesh.aoSRV.Get(), 
                      mesh.metallicSRV.Get(),
                      mesh.roughnessSRV.Get(),
                      mesh.emissiveSRV.Get(),
@@ -134,7 +134,7 @@ void Model::Render(ComPtr<ID3D11DeviceContext> &context) {
         const std::vector<ID3D11ShaderResourceView *> psNullSRVs(
             mResViews.size(), nullptr);
         const std::vector<ID3D11ShaderResourceView *> vsNullSRVs(1, nullptr);
-
+         
         context->IASetIndexBuffer(mesh.mIndexBuffer.Get(), DXGI_FORMAT_R32_UINT,
                                   0);
         context->IASetVertexBuffers(0, 1, mesh.mVertexBuffer.GetAddressOf(),
