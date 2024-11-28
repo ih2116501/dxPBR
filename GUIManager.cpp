@@ -4,12 +4,12 @@ GUIManager *gGUIManager = nullptr;
 
 GUIManager::GUIManager(int width, int height)
     : mScreenWidth(width), mScreenHeight(height), mLButtonDown(false),
-      mRButtonDown(false), mLDragStart(false), mRDragStart(false), mMouseX(0),
-      mMouseY(0), mMouseMove(false) {}
-GUIManager::~GUIManager() { 
+      mLDragStart(false), mMouseX(0), mMouseY(0), mMouseWheel(false),
+      mDWheel(0) {}
+GUIManager::~GUIManager() {
     gGUIManager = nullptr;
-    std::cout << "GUIManager closed.\n"; }
-
+    std::cout << "GUIManager closed.\n";
+}
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd,
                                                              UINT msg,
@@ -59,27 +59,18 @@ LRESULT GUIManager::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         if (!mLButtonDown)
             mLDragStart = true;
         mLButtonDown = true;
-        std::cout << "lbtndown" << std::endl;
-        break;
-    case WM_RBUTTONDOWN:
-        if (!mRButtonDown)
-            mRDragStart = true;
-        mRButtonDown = true;
-        std::cout << "rbtndown" << std::endl;
         break;
     case WM_LBUTTONUP:
-        std::cout << "lbtnup" << std::endl;
         mLButtonDown = false;
         break;
-    case WM_RBUTTONUP:
-        mRButtonDown = false;
-        break;
+
     case WM_MOUSEMOVE:
         mMouseX = LOWORD(lParam);
         mMouseY = HIWORD(lParam);
-        mMouseMove = true;
-
         break;
+    case WM_MOUSEWHEEL:
+        mMouseWheel = true;
+        mDWheel = GET_WHEEL_DELTA_WPARAM(wParam);
     }
     return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }

@@ -172,59 +172,56 @@ bool Engine::Update() {
     D3DUtils::UpdateBuffer(mDevice, mContext, mMainModel->mPixelConstData,
                            mMainModel->mPixelCB);
     D3DUtils::UpdateBuffer(mDevice, mContext, mLight, mLightBuffer);
-    
+
     Vector2 currentMouseXY;
     constData.view = constData.view.Transpose();
-    Matrix prevView = constData.view;
     if (mGUIManager->mLButtonDown) {
         if (mGUIManager->mLDragStart) {
             mGUIManager->mLDragStart = false;
             mPrevMouseXY = Vector2(float(mGUIManager->mMouseX),
                                    float(mGUIManager->mMouseY));
         } else {
-            Vector3 axisZ = Vector3(0.0f, 0.0f, 1.0f);
             currentMouseXY = Vector2(float(mGUIManager->mMouseX),
                                      float(mGUIManager->mMouseY));
-            dMouse = (mPrevMouseXY - currentMouseXY);
-
-            //if (mGUIManager->mMouseMove) {
-
-                Vector3 rotAxis =
-                    axisZ.Cross(Vector3(dMouse.x / 100, -dMouse.y / 100, 0.0f));
-                if (rotAxis != DirectX::XMVectorZero())
-                    constData.view *=
-                        Matrix::CreateTranslation(mEyePos) *
-                        Matrix::CreateFromAxisAngle(rotAxis, 0.05f) *
-                        Matrix::CreateTranslation(-mEyePos);
-            //}
+            dMouse += (mPrevMouseXY - currentMouseXY);
+            constData.view = Matrix::CreateRotationY(dMouse.x / 100) *
+                             Matrix::CreateRotationX(dMouse.y / 100) *
+                             Matrix::CreateTranslation(-mEyePos);
             mPrevMouseXY = currentMouseXY;
         }
     }
+    if (mGUIManager->mMouseWheel) {
+        constData.view *= Matrix::CreateTranslation(mEyePos);
+        mGUIManager->mMouseWheel = false;
+        int dir = (mGUIManager->mDWheel > 0) - (mGUIManager->mDWheel < 0);
+        mEyePos += Vector3(0.0f, 0.0f, dir * 0.5);
+        constData.view *= Matrix::CreateTranslation(-mEyePos);
+    }
+
     constData.eyePos = Vector3::Transform(mEyePos, constData.view.Invert());
     constData.view = constData.view.Transpose();
     constData.vp = constData.proj * constData.view;
 
     D3DUtils::UpdateBuffer(mDevice, mContext, constData, mConstantBuffer);
-    mGUIManager->mMouseMove = false;
     return true;
 }
 
-//bool Engine::Update() {
-//    mMainModel->mPixelConstData.useWireframe = mRenderManager->mUseWireframe;
-//    D3DUtils::UpdateBuffer(mDevice, mContext, mMainModel->mPixelConstData,
-//                           mMainModel->mPixelCB);
-//    D3DUtils::UpdateBuffer(mDevice, mContext, mLight, mLightBuffer);
+// bool Engine::Update() {
+//     mMainModel->mPixelConstData.useWireframe = mRenderManager->mUseWireframe;
+//     D3DUtils::UpdateBuffer(mDevice, mContext, mMainModel->mPixelConstData,
+//                            mMainModel->mPixelCB);
+//     D3DUtils::UpdateBuffer(mDevice, mContext, mLight, mLightBuffer);
 //
-//    constData.view = Matrix::CreateRotationX(mViewRot.x) *
-//                     Matrix::CreateRotationY(mViewRot.y) *
-//                     Matrix::CreateTranslation(-mEyePos);
-//    constData.eyePos = Vector3::Transform(mEyePos, constData.view.Invert());
-//    constData.view = constData.view.Transpose();
-//    constData.vp = constData.proj * constData.view;
+//     constData.view = Matrix::CreateRotationX(mViewRot.x) *
+//                      Matrix::CreateRotationY(mViewRot.y) *
+//                      Matrix::CreateTranslation(-mEyePos);
+//     constData.eyePos = Vector3::Transform(mEyePos, constData.view.Invert());
+//     constData.view = constData.view.Transpose();
+//     constData.vp = constData.proj * constData.view;
 //
-//    D3DUtils::UpdateBuffer(mDevice, mContext, constData, mConstantBuffer);
-//    return true;
-//}
+//     D3DUtils::UpdateBuffer(mDevice, mContext, constData, mConstantBuffer);
+//     return true;
+// }
 
 bool Engine::Render() {
     std::vector<ID3D11Buffer *> cbList = {mConstantBuffer.Get(),

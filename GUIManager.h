@@ -20,9 +20,10 @@ class GUIManager {
 
     int mScreenWidth, mScreenHeight;
     int mMouseX, mMouseY;
-    bool mLButtonDown, mRButtonDown;
-    bool mLDragStart, mRDragStart;
-    bool mMouseMove;
+    bool mLButtonDown;
+    bool mLDragStart;
+    bool mMouseWheel;
+    int mDWheel;
     
     LRESULT MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 };
