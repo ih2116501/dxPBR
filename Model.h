@@ -10,7 +10,7 @@ using namespace Microsoft::WRL;
 struct PixelConstdata {
     int useWireframe = 0;
     int useMetallicRoughness = 0;
-    float dummy[2];
+    int dummy[2];
 };
 
 class Model : ObjectBase {
@@ -47,6 +47,7 @@ class Model : ObjectBase {
     std::vector<ID3D11SamplerState *> mSamplerList;
 
     PixelConstdata mPixelConstData;
+    PixelConstdata mEmptyPixelConstData;
     ComPtr<ID3D11Buffer> mPixelCB;
     std::vector<ID3D11ShaderResourceView *> mResViews;
     std::vector<Mesh> mMeshes;

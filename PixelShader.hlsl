@@ -16,8 +16,8 @@ Texture2D metallicRoughnessTex : register(t16);
 
 cbuffer PixelConstants : register(b5)
 {
-    int useWireframe;
-    int useMetallicRoughnessTex;
+    int useWireframe = 0;
+    int useMetallicRoughnessTex = 0;
     float2 dummyy;
 }
 
@@ -40,11 +40,12 @@ float3 SpecularIBL(float3 albedo, float3 normalWorld, float3 pixelToEye,
 }
 
 float3 DiffuseIBL(float3 albedo, float3 normalWorld, float3 pixelToEye,
-                  float metallic, float3 H)
+                  float metallic)
 {
+    
     float3 Fdielectric = 0.04f;
     float3 F0 = lerp(Fdielectric, albedo, metallic);
-    float3 F = SchlickFresnel(F0, max(0.0, dot(H, pixelToEye)));
+    float3 F = SchlickFresnel(F0, max(0.0, dot(normalWorld, pixelToEye)));
     float3 kd = lerp(1.0 - F, 0.0, metallic);
     float3 irradiance = irradianceIBLTex.SampleLevel(g_sampler, normalWorld, 0).rgb;
     return kd * albedo * irradiance;
@@ -52,12 +53,10 @@ float3 DiffuseIBL(float3 albedo, float3 normalWorld, float3 pixelToEye,
 }
 
 float3 AmbientLightingByIBL(float3 albedo, float3 normalW, float3 pixelToEye, float ao,
-                            float metallic, float roughness, float3 H)
+                            float metallic, float roughness)
 {
-    float3 diffuseIBL = DiffuseIBL(albedo, normalW, pixelToEye, metallic, H);
+    float3 diffuseIBL = DiffuseIBL(albedo, normalW, pixelToEye, metallic);
     float3 specularIBL = SpecularIBL(albedo, normalW, pixelToEye, metallic, roughness);
-    //return diffuseIBL;
-
     return (diffuseIBL + specularIBL) * ao;
 }
 
@@ -79,13 +78,8 @@ float4 main(PSInput psInput) : SV_TARGET
         
         float3x3 TBN = float3x3(T, B, N);
         float3 normalWorld = normalize(mul(tNormal, TBN));
-        //float3 normalWorld = psInput.normal;
 
-        float3 basicColor = float3(0.0f, 0.0f, 0.0f);
-        float3 toLight = normalize(lightPos - psInput.posWorld);
         float3 toEye = normalize(psInput.eyePos - psInput.posWorld);
-        float3 H = normalize(toEye + toLight);
-        float ndoth = dot(H, psInput.normal);
     
         float3 albedo = albedoTex.SampleLevel(g_sampler, psInput.tex, 0).rgb;
         //return float4(albedo, 1.0f);
@@ -103,7 +97,7 @@ float4 main(PSInput psInput) : SV_TARGET
             tRoughness = metallicRoughnessTex.SampleLevel(g_sampler, psInput.tex, 0).g;
         }
         float ao = aoTex.Sample(g_sampler, psInput.tex).r;
-        float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, toEye, ao, tMetallic, tRoughness, H);
+        float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, toEye, ao, tMetallic, tRoughness);
         float3 emissive = emissiveTex.Sample(g_sampler, psInput.tex);
         return float4(ambientLighting + emissive*2.0, 1.0);
     }

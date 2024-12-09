@@ -2,7 +2,6 @@
 
 #include "D3DUtils.h"
 #include "Mesh.h"
-#include <DirectXMath.h>
 #include <memory>
 #include <vector>
 #include <wrl/client.h>

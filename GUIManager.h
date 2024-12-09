@@ -24,6 +24,6 @@ class GUIManager {
     bool mLDragStart;
     bool mMouseWheel;
     int mDWheel;
-    
+
     LRESULT MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 };

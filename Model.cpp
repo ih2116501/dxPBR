@@ -1,20 +1,23 @@
 #include "Model.h"
 #include "D3DUtils.h"
-#include <DirectXMath.h>
 #include <iostream>
 
 using namespace DirectX::SimpleMath;
 
-Model::Model() { std::cout << "model open\n"; }
+Model::Model() {}
 
-Model::~Model() { std::cout << "model closed\n"; }
+Model::~Model() {}
 
 void Model::Initialize(ComPtr<ID3D11Device> &device,
                        ComPtr<ID3D11DeviceContext> &context,
                        std::vector<MeshData> &meshes) {
     // ObjectType = DEFAULT_MODEL;
-    CreateSamplers(device);
-    CreateMeshes(device, context, meshes);
+    mMeshes.clear();
+    mMeshes.shrink_to_fit();
+    mPixelConstData = mEmptyPixelConstData;
+
+    this->CreateSamplers(device);
+    this->CreateMeshes(device, context, meshes);
     mPixelConstData.useWireframe = 0;
     D3DUtils::CreateConstantBuffer(device, mPixelConstData, mPixelCB);
 }
@@ -22,6 +25,10 @@ void Model::Initialize(ComPtr<ID3D11Device> &device,
 void Model::Initialize(ComPtr<ID3D11Device> &device,
                        ComPtr<ID3D11DeviceContext> &context,
                        MeshData &meshData) {
+    mMeshes.clear();
+    mMeshes.shrink_to_fit();
+    mPixelConstData = mEmptyPixelConstData;
+
     CreateSamplers(device);
     Mesh newMesh;
     // D3DUtils::CreateTexture(device, "d", texture, textureSRV);
@@ -92,7 +99,12 @@ void Model::CreateMesh(ComPtr<ID3D11Device> &device,
         D3DUtils::CreateTexture(device, context, meshData.aoTextureFilename,
                                 newMesh.aoTexture, newMesh.aoSRV);
     }
-
+    if (!meshData.metallicRoughnessFilename.empty()) {
+        mPixelConstData.useMetallicRoughness = 1;
+        D3DUtils::CreateTexture(
+            device, context, meshData.metallicRoughnessFilename,
+            newMesh.metallicRoughnessTexture, newMesh.metallicRoughnessSRV);
+    }
     if (!meshData.metallicTextureFilename.empty()) {
         D3DUtils::CreateTexture(device, context,
                                 meshData.metallicTextureFilename,
@@ -104,16 +116,10 @@ void Model::CreateMesh(ComPtr<ID3D11Device> &device,
                                 meshData.roughnessTextureFilename,
                                 newMesh.roughnessTexture, newMesh.roughnessSRV);
     }
-    if (!meshData.metallicRoughnessFilename.empty()) {
-        mPixelConstData.useMetallicRoughness = 1;
-        D3DUtils::CreateTexture(
-            device, context, meshData.metallicRoughnessFilename,
-            newMesh.metallicRoughnessTexture, newMesh.metallicRoughnessSRV); 
-    }
 
     D3DUtils::CreateVertexBuffer(device, meshData.vertices,
                                  newMesh.mVertexBuffer);
-    D3DUtils::CreateIndexBuffer(device, meshData.indices, newMesh.mIndexBuffer); 
+    D3DUtils::CreateIndexBuffer(device, meshData.indices, newMesh.mIndexBuffer);
     newMesh.indexCount = meshData.indices.size();
     mMeshes.push_back(newMesh);
 }
@@ -125,7 +131,7 @@ void Model::Render(ComPtr<ID3D11DeviceContext> &context) {
         ID3D11ShaderResourceView *vsSRVs[1] = {mesh.heightSRV.Get()};
         mResViews = {mesh.albedoSRV.Get(),
                      mesh.normalSRV.Get(),
-                     mesh.aoSRV.Get(), 
+                     mesh.aoSRV.Get(),
                      mesh.metallicSRV.Get(),
                      mesh.roughnessSRV.Get(),
                      mesh.emissiveSRV.Get(),
@@ -134,7 +140,7 @@ void Model::Render(ComPtr<ID3D11DeviceContext> &context) {
         const std::vector<ID3D11ShaderResourceView *> psNullSRVs(
             mResViews.size(), nullptr);
         const std::vector<ID3D11ShaderResourceView *> vsNullSRVs(1, nullptr);
-         
+
         context->IASetIndexBuffer(mesh.mIndexBuffer.Get(), DXGI_FORMAT_R32_UINT,
                                   0);
         context->IASetVertexBuffers(0, 1, mesh.mVertexBuffer.GetAddressOf(),

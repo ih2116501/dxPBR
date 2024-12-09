@@ -1,6 +1,5 @@
 #include "D3DUtils.h"
 #include "Image.h"
-#include <DirectXTexEXR.h>
 #include <directxtk/DDSTextureLoader.h>
 #include <iostream>
 #include <memory>
@@ -8,7 +7,6 @@
 
 // D3DUtils::D3DUtils() : mDXGIAdapter(nullptr), mDXGIDevice1(nullptr),
 // mDXGIFactory1(nullptr) {} D3DUtils::~D3DUtils() {
-//	std::cout << "D3DUtils closed.\n";
 // }
 
 /**
@@ -120,9 +118,6 @@ bool D3DUtils::CreateDevice(ComPtr<ID3D11Device> &device,
                                     featureLevels, ARRAYSIZE(featureLevels),
                                     D3D11_SDK_VERSION, device.GetAddressOf(),
                                     &featureLevel, context.GetAddressOf()));
-
-    std::cout << "featureLevel : " << featureLevel << std::endl;
-
     return true;
 }
 
@@ -134,10 +129,6 @@ bool D3DUtils::CreateSwapChain(ComPtr<ID3D11Device> &device,
     ComPtr<IDXGIAdapter> mDXGIAdapter;
     device.As(&mDXGIDevice1);
     mDXGIDevice1->GetAdapter(&mDXGIAdapter);
-
-    // std::cout << "device : " << device.Get() << std::endl;
-    // std::cout << "DXGIDevice1 : " << mDXGIDevice1.Get() << std::endl;
-
     mDXGIAdapter->GetParent(__uuidof(IDXGIFactory1), &mDXGIFactory1);
 
     UINT numQualityLevels = 0;
@@ -158,10 +149,9 @@ bool D3DUtils::CreateSwapChain(ComPtr<ID3D11Device> &device,
     sd.Windowed = TRUE;
     sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
     sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-    std::cout << "numQuarlityLevels : " << numQualityLevels << std::endl;
     sd.SampleDesc.Count = 1;
     sd.SampleDesc.Quality = 0;
-    ThrowIfFailed(mDXGIFactory1->CreateSwapChain(mDXGIDevice1.Get(), &sd,
+    ThrowIfFailed(mDXGIFactory1->CreateSwapChain(device.Get(), &sd,
                                                  swapChain.GetAddressOf()));
 
     return true;
@@ -319,29 +309,29 @@ void D3DUtils::CreatePixelShader(ComPtr<ID3D11Device> &device,
 }
 
 void D3DUtils::CreateHullShader(ComPtr<ID3D11Device> &device,
-                                 const std::wstring &filename,
-                                 ComPtr<ID3D11HullShader> &hullShader) {
+                                const std::wstring &filename,
+                                ComPtr<ID3D11HullShader> &hullShader) {
 
     ComPtr<ID3DBlob> shaderBlob;
     ComPtr<ID3DBlob> errorBlob;
     CompileShader(filename, "hs_5_0", shaderBlob, errorBlob);
 
     ThrowIfFailed(device->CreateHullShader(shaderBlob->GetBufferPointer(),
-                                            shaderBlob->GetBufferSize(), NULL,
-                                            hullShader.GetAddressOf()));
+                                           shaderBlob->GetBufferSize(), NULL,
+                                           hullShader.GetAddressOf()));
 }
 
 void D3DUtils::CreateDomainShader(ComPtr<ID3D11Device> &device,
-                                const std::wstring &filename,
-                                ComPtr<ID3D11DomainShader> &domainShader) {
+                                  const std::wstring &filename,
+                                  ComPtr<ID3D11DomainShader> &domainShader) {
 
     ComPtr<ID3DBlob> shaderBlob;
     ComPtr<ID3DBlob> errorBlob;
     CompileShader(filename, "hs_5_0", shaderBlob, errorBlob);
 
     ThrowIfFailed(device->CreateDomainShader(shaderBlob->GetBufferPointer(),
-                                           shaderBlob->GetBufferSize(), NULL,
-                                           domainShader.GetAddressOf()));
+                                             shaderBlob->GetBufferSize(), NULL,
+                                             domainShader.GetAddressOf()));
 }
 
 void D3DUtils::CreateTexture(ComPtr<ID3D11Device> &device,
@@ -355,7 +345,6 @@ void D3DUtils::CreateTexture(ComPtr<ID3D11Device> &device,
     //     stbi_load(filename.c_str(), &width, &height, &channels, 0);
 
     unsigned char *img = Image::Load(filename.c_str(), width, height, channels);
-    // std::cout << img << std::endl;
     std::vector<uint8_t> image;
     image.resize(width * height * 4);
 
@@ -407,7 +396,6 @@ void D3DUtils::CreateTexture(ComPtr<ID3D11Device> &device,
     D3D11_SUBRESOURCE_DATA d;
     d.pSysMem = image.data();
     d.SysMemPitch = desc.Width * sizeof(uint8_t) * 4;
-
     device->CreateTexture2D(&desc, &d, texture.GetAddressOf());
     device->CreateShaderResourceView(texture.Get(), nullptr,
                                      textureSRV.GetAddressOf());

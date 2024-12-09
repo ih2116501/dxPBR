@@ -10,6 +10,7 @@
 #include <vector>
 #include <wrl/client.h>
 
+
 using namespace Microsoft::WRL;
 
 static void ThrowIfFailed(HRESULT hr, ID3DBlob *errorBlob = nullptr) {
@@ -34,9 +35,8 @@ bool InitD3D(HWND &mainWindow, ComPtr<ID3D11Device> &device,
 
 bool CreateDevice(ComPtr<ID3D11Device> &device,
                   ComPtr<ID3D11DeviceContext> &context);
-bool CreateSwapChain(ComPtr<ID3D11Device> &device,
-                     ComPtr<IDXGISwapChain> &swapChain, HWND &mainWindow,
-                     int width, int height);
+bool CreateSwapChain(ComPtr<ID3D11Device> &device, ComPtr<IDXGISwapChain> &swapChain,
+                     HWND &mainWindow, int width, int height);
 
 void CreateViewport(ComPtr<ID3D11DeviceContext> &context,
                     D3D11_VIEWPORT &viewport, int width, int height);

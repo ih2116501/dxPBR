@@ -15,12 +15,13 @@
 #include <vector>
 #include <wrl/client.h>
 
+
 class Engine {
   public:
     Engine();
     ~Engine();
 
-    bool InitEngine();
+    bool InitEngine(ComPtr<ID3D11Device> &device);
     bool Run();
     bool Update();
     bool Render();
@@ -32,7 +33,6 @@ class Engine {
     // D3DUtils mD3DUtils;
 
   private:
-
     std::shared_ptr<RenderManager> mRenderManager;
 
     HWND mMainWindow;
@@ -55,8 +55,6 @@ class Engine {
     ComPtr<ID3D11PixelShader> mSkyBoxPS;
     ComPtr<ID3D11InputLayout> mInputLayout;
     ComPtr<ID3D11InputLayout> mSkyBoxIL;
-    Light mLight;
-    ComPtr<ID3D11Buffer> mLightBuffer;
     DirectX::SimpleMath::Vector3 mEyePos;
     DirectX::SimpleMath::Vector2 mViewRot;
     ConstData constData;
@@ -69,5 +67,7 @@ class Engine {
     //std::shared_ptr<Model> mTriangle;
     DirectX::SimpleMath::Vector2 dMouse;
     DirectX::SimpleMath::Vector2 mPrevMouseXY;
-    DirectX::SimpleMath::Vector3 prevAxis;
+
+    int mModelNum;
+    bool mModelChangeFlag;
 };

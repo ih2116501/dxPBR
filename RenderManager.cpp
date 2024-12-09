@@ -23,27 +23,29 @@ void RenderManager::InitRenderer(ComPtr<ID3D11Device> &device,
     CreateBuffers();
 
     std::wstring basePath = L"./Assets/Textures/Cubemap/";
-    
+
     // create textures
     D3DUtils::CreateDDSTexture(
-        mDevice, (basePath + L"outdoorEnvHDR.dds").c_str(), true, mEnvSRV);
+        mDevice, (basePath + L"empty_play_roomEnvHDR.dds").c_str(), true,
+        mEnvSRV);
     mSkyboxSRVs.push_back(mEnvSRV.Get());
 
-    D3DUtils::CreateDDSTexture(mDevice,
-                               (basePath + L"outdoorSpecularHDR.dds").c_str(),
-                               true, mSpecularSRV);
+    D3DUtils::CreateDDSTexture(
+        mDevice, (basePath + L"empty_play_roomSpecularHDR.dds").c_str(), true,
+        mSpecularSRV);
     mSkyboxSRVs.push_back(mSpecularSRV.Get());
 
-    D3DUtils::CreateDDSTexture(mDevice,
-                               (basePath + L"outdoorDiffuseHDR.dds").c_str(),
-                               true, mIrradianceSRV);
+    D3DUtils::CreateDDSTexture(
+        mDevice, (basePath + L"empty_play_roomDiffuseHDR.dds").c_str(), true,
+        mIrradianceSRV);
     mSkyboxSRVs.push_back(mIrradianceSRV.Get());
 
-    D3DUtils::CreateDDSTexture(mDevice, (basePath + L"outdoorBrdf.dds").c_str(),
+    D3DUtils::CreateDDSTexture(mDevice,
+                               (basePath + L"empty_play_roomBrdf.dds").c_str(),
                                false, mBrdfSRV);
     mSkyboxSRVs.push_back(mBrdfSRV.Get());
 
-    // create shaders                              
+    // create shaders
     D3DUtils::CreateVertexShader(mDevice, L"VertexShader.hlsl", mVertexShader,
                                  mInputLayout);
     D3DUtils::CreatePixelShader(mDevice, L"PixelShader.hlsl", mPixelShader);
@@ -77,7 +79,7 @@ void RenderManager::InitRenderer(ComPtr<ID3D11Device> &device,
 
     // set pipelines
     mBasicPipeline.rs = mBasicRS;
-    //mBasicPipeline.rs = mWireframeRS;
+    // mBasicPipeline.rs = mWireframeRS;
     mBasicPipeline.InputLayout = mInputLayout;
     mBasicPipeline.vs = mVertexShader;
     mBasicPipeline.ps = mPixelShader;
@@ -102,15 +104,15 @@ void RenderManager::InitRenderer(ComPtr<ID3D11Device> &device,
     mScreenPipeline.vs = mScreenVS;
     mScreenPipeline.ps = mScreenPS;
 
-    //std::unordered_map<OjbectType, std::shared_ptr<std::vector<Model>>> um;
-    //std::shared_ptr<std::vector<Model>> defaultobjList;
-    //defaultobjList = std::make_shared<std::vector<Model>>();
+    // std::unordered_map<OjbectType, std::shared_ptr<std::vector<Model>>> um;
+    // std::shared_ptr<std::vector<Model>> defaultobjList;
+    // defaultobjList = std::make_shared<std::vector<Model>>();
 
-    //um[DEFAULT_OBJECT] = defaultobjList;
-    //std::shared_ptr<std::vector<Model>> list;
+    // um[DEFAULT_OBJECT] = defaultobjList;
+    // std::shared_ptr<std::vector<Model>> list;
 
-    //list = um[DEFAULT_OBJECT];
-    // this.objectList = objlist;
+    // list = um[DEFAULT_OBJECT];
+    //  this.objectList = objlist;
     /*
      *foreach(auto obj : objlist){
      *
@@ -130,7 +132,7 @@ void RenderManager::CreateRasterizerStates() {
     ThrowIfFailed(
         mDevice->CreateRasterizerState(&rastDesc, mBasicRS.GetAddressOf()));
 
-    //rastDesc.CullMode = D3D11_CULL_NONE;
+    // rastDesc.CullMode = D3D11_CULL_NONE;
     rastDesc.FrontCounterClockwise = true;
     ThrowIfFailed(
         mDevice->CreateRasterizerState(&rastDesc, mSkyBoxRS.GetAddressOf()));
@@ -198,7 +200,7 @@ void RenderManager::ClearFrame() {
 void RenderManager::RenderObjects() {
     mContext->OMSetDepthStencilState(mDSS.Get(), 0);
     mContext->OMSetRenderTargets(1, mFloatRTV.GetAddressOf(), mDSV.Get());
-    //mContext->OMSetRenderTargets(1, mFloatRTV.GetAddressOf(), mDSV.Get());
+    // mContext->OMSetRenderTargets(1, mFloatRTV.GetAddressOf(), mDSV.Get());
 
     mBasicPipeline.SetPipeline(mContext);
 }

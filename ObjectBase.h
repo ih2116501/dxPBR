@@ -1,15 +1,5 @@
 #pragma once
 
-// clang-format off
-/*****************************************************************//**
- * \file   GObject.h
- * \brief  declare base class for renderable classes
- * 
- * \author Hoyeon
- * \date   August 2024
- *********************************************************************/
-// clang-format on
-
 #include "Mesh.h"
 #include <d3d11.h>
 #include <iostream>
@@ -22,9 +12,9 @@ using namespace Microsoft::WRL;
 
 class ObjectBase {
   public:
-    ObjectBase() { std::cout << "OBJBase open\n"; };
+    ObjectBase(){};
 
-    virtual ~ObjectBase() { std::cout << "ObjectBase closed\n"; };
+    virtual ~ObjectBase(){};
 
     virtual void Initialize(ComPtr<ID3D11Device> &device,
                             ComPtr<ID3D11DeviceContext> &context,

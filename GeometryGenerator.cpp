@@ -63,7 +63,6 @@ MeshData GeometryGenerator::CreateSquare(const float scale,
         v.position = positions[i];
         v.normal = normals[i];
         v.texcoord = texcoords[i] * texScale;
-        // v.tangentModel = Vector3(1.0f, 0.0f, 0.0f);
 
         meshData.vertices.push_back(v);
     }
@@ -103,9 +102,7 @@ MeshData GeometryGenerator::CreateSphere(uint32_t numStacks, uint32_t numSlices,
 
             Vector3 biTangent = Vector3(0.0f, -1.0f, 0.0f);
 
-            Vector3 normalOrth = v.normal - biTangent.Dot(v.normal) * biTangent;
             biTangent = biTangent - biTangent.Dot(v.normal) * v.normal;
-            normalOrth.Normalize();
             biTangent.Normalize();
 
             v.tangent = biTangent.Cross(v.normal);

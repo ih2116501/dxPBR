@@ -12,18 +12,6 @@ cbuffer VSConstant : register(b0)
     float4x4 invTranspose;
 };
 
-cbuffer Light : register(b1)
-{
-    float3 lightPos;
-    float radiance;
-    float3 lightDir;
-    float fallOffStart;
-    float3 color;
-    float fallOffEnd;
-    float3 dummy2;
-    float lightPow;
-};
-
 struct PSInput
 {
     float4 pos : SV_POSITION;

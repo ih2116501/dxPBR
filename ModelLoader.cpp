@@ -218,7 +218,6 @@ MeshData ModelLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene) {
             ReadFilename(material, aiTextureType_METALNESS);
         newMesh.roughnessTextureFilename =
             ReadFilename(material, aiTextureType_DIFFUSE_ROUGHNESS);
-        //aiTextureType_UNKNOWN
         newMesh.aoTextureFilename =
             ReadFilename(material, aiTextureType_AMBIENT_OCCLUSION);
         newMesh.metallicRoughnessFilename =
