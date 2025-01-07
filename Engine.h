@@ -64,7 +64,6 @@ class Engine {
     std::shared_ptr<Model> mSkyBox;
     
     std::vector<std::shared_ptr<Model>> objList;
-    //std::shared_ptr<Model> mTriangle;
     DirectX::SimpleMath::Vector2 dMouse;
     DirectX::SimpleMath::Vector2 mPrevMouseXY;
 

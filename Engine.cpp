@@ -49,12 +49,11 @@ bool Engine::InitEngine(ComPtr<ID3D11Device> &device) {
     mGUIManager->InitWindows(mMainWindow);
     D3DUtils::CreateDevice(mDevice, mContext);
 
-    D3DUtils::CreateSwapChain(mDevice, mSwapChain, mMainWindow,
-                              mScreenWidth,
+    D3DUtils::CreateSwapChain(mDevice, mSwapChain, mMainWindow, mScreenWidth,
                               mScreenHeight);
     device = mDevice;
     mGUIManager->InitGUI(mMainWindow, mDevice, mContext);
-    
+
     D3DUtils::CreateViewport(mContext, mViewport, mScreenWidth, mScreenHeight);
     mRenderManager->InitRenderer(mDevice, mContext, mSwapChain);
 
@@ -143,7 +142,7 @@ bool Engine::Update() {
         mModelChangeFlag = false;
         if (mModelNum == UVSphere) {
             MeshData sphereMesh =
-                GeometryGenerator::CreateSphere(30, 30, Vector2(2.0f, 1.0f));
+                GeometryGenerator::CreateSphere(100, 100, Vector2(4.0f, 2.5f));
 
             const std::string path = "./Assets/Textures/PBRTextures/";
             sphereMesh.albedoTextureFilename =

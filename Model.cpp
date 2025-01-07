@@ -11,15 +11,17 @@ Model::~Model() {}
 void Model::Initialize(ComPtr<ID3D11Device> &device,
                        ComPtr<ID3D11DeviceContext> &context,
                        std::vector<MeshData> &meshes) {
-    // ObjectType = DEFAULT_MODEL;
     mMeshes.clear();
     mMeshes.shrink_to_fit();
     mPixelConstData = mEmptyPixelConstData;
 
-    this->CreateSamplers(device);
+    if (mSamplerList.size() == 0)
+        this->CreateSamplers(device);
     this->CreateMeshes(device, context, meshes);
     mPixelConstData.useWireframe = 0;
-    D3DUtils::CreateConstantBuffer(device, mPixelConstData, mPixelCB);
+
+    if (mPixelCB.Get() == nullptr)
+        D3DUtils::CreateConstantBuffer(device, mPixelConstData, mPixelCB);
 }
 
 void Model::Initialize(ComPtr<ID3D11Device> &device,
@@ -29,12 +31,14 @@ void Model::Initialize(ComPtr<ID3D11Device> &device,
     mMeshes.shrink_to_fit();
     mPixelConstData = mEmptyPixelConstData;
 
-    CreateSamplers(device);
+    if (mSamplerList.size() == 0)
+        this->CreateSamplers(device);
     Mesh newMesh;
     // D3DUtils::CreateTexture(device, "d", texture, textureSRV);
-    CreateMesh(device, context, meshData);
+    this->CreateMesh(device, context, meshData);
     mPixelConstData.useWireframe = 0;
-    D3DUtils::CreateConstantBuffer(device, mPixelConstData, mPixelCB);
+    if (mPixelCB.Get() == nullptr)
+        D3DUtils::CreateConstantBuffer(device, mPixelConstData, mPixelCB);
 }
 
 void Model::CreateSamplers(ComPtr<ID3D11Device> &device) {

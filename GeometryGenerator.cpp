@@ -107,6 +107,9 @@ MeshData GeometryGenerator::CreateSphere(uint32_t numStacks, uint32_t numSlices,
 
             v.tangent = biTangent.Cross(v.normal);
             v.tangent.Normalize();
+
+            v.tangent.x /= texScale.x;
+            v.tangent.y /= texScale.y;
             meshData.vertices.push_back(v);
         }
     }
@@ -127,8 +130,10 @@ MeshData GeometryGenerator::CreateSphere(uint32_t numStacks, uint32_t numSlices,
             indices.push_back(offset + i + 1);
         }
     }
+
     meshData.indices = indices;
 
+    // GeometryGenerator::ComputeFaceNormal(meshData, texScale);
     return meshData;
 }
 
@@ -297,3 +302,56 @@ void GeometryGenerator::NormalizeMesh(std::vector<MeshData> &meshes,
         }
     }
 }
+
+// void GeometryGenerator::ComputeFaceNormal(MeshData &meshData,
+//                                           Vector2 texScale) {
+//     for (int i = 0; i < meshData.indices.size(); i += 3) {
+//         int idx0 = meshData.indices[i];
+//         int idx1 = meshData.indices[i + 1];
+//         int idx2 = meshData.indices[i + 2];
+//
+//         Vector3 pos0 = meshData.vertices[idx0].position;
+//         Vector3 pos1 = meshData.vertices[idx1].position;
+//         Vector3 pos2 = meshData.vertices[idx2].position;
+//
+//         Vector2 uv0 = meshData.vertices[idx0].texcoord;
+//         Vector2 uv1 = meshData.vertices[idx1].texcoord;
+//         Vector2 uv2 = meshData.vertices[idx2].texcoord;
+//
+//         Vector3 dPos1 = pos1 - pos0;
+//         Vector3 dPos2 = pos2 - pos0;
+//         Vector3 n = dPos1.Cross(dPos2);
+//         // Vector3 n = dPos2.Cross(dPos1);
+//
+//         Vector2 dUV1 = uv1 - uv0;
+//         Vector2 dUV2 = uv2 - uv0;
+//
+//         meshData.vertices[idx0].normal = n;
+//         meshData.vertices[idx1].normal = n;
+//         meshData.vertices[idx2].normal = n;
+//         if (idx0 == 0) {
+//             std::cout << "idx0 : " << idx0 << std::endl;
+//             std::cout << "idx1 : " << idx1 << std::endl;
+//             std::cout << "idx2 : " << idx2 << std::endl;
+//         }
+//         if (idx1 == 0) {
+//             std::cout << "idx0 : " << idx0 << std::endl;
+//             std::cout << "idx1 : " << idx1 << std::endl;
+//             std::cout << "idx2 : " << idx2 << std::endl;
+//         }
+//         if (idx2 == 0) {
+//             std::cout << "idx0 : " << idx0 << std::endl;
+//             std::cout << "idx1 : " << idx1 << std::endl;
+//             std::cout << "idx2 : " << idx2 << std::endl;
+//         }
+//         float r = 1.0f / (dUV1.x * dUV2.y - dUV1.y * dUV2.x);
+//         // Vector3 tangent = (dPos1 * dUV2.x - dPos2 * dUV1.x) * r;
+//         Vector3 tangent = (dPos2 * dUV1.x - dPos1 * dUV2.x) * r;
+//         // tangent.x /= texScale.x;
+//         // tangent.y /= texScale.y;
+//         tangent.Normalize();
+//         meshData.vertices[idx0].tangent = tangent;
+//         meshData.vertices[idx1].tangent = tangent;
+//         meshData.vertices[idx2].tangent = tangent;
+//     }
+// }
