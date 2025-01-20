@@ -22,6 +22,7 @@ class RenderManager {
     void RenderScreen();
     void ClearFrame();
     bool mUseWireframe;
+    bool mOption1;
 
 
   private:

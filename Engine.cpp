@@ -13,7 +13,7 @@ Engine::Engine()
     : mMainWindow(0), mScreenWidth(1280), mScreenHeight(720), mDevice(nullptr),
       mContext(nullptr), mSwapChain(nullptr), mBackBufferRTV(nullptr),
       mViewRot(Vector2(0.0f)), mViewport({}), mPrevMouseXY(Vector2(0.0f, 0.0f)),
-      dMouse(Vector2(0.0f)), mModelNum(1), mModelChangeFlag(true) {
+      dMouse(Vector2(0.0f)), mModelNum(0), mModelChangeFlag(true) {
     mGUIManager = std::make_shared<GUIManager>(mScreenWidth, mScreenHeight);
     mRenderManager =
         std::make_shared<RenderManager>(mScreenWidth, mScreenHeight);
@@ -114,13 +114,14 @@ bool Engine::Run() {
             ImGui::Checkbox("wireframe", &mRenderManager->mUseWireframe);
 
             const char *items[] = {"UVSphere", "DamagedHelmet"};
-            static int currentItemNum = 1;
+            static int currentItemNum = 0;
             int prevItemNum = currentItemNum;
             ImGui::Combo("model", &currentItemNum, items, IM_ARRAYSIZE(items));
             mModelNum = currentItemNum;
             if (prevItemNum != currentItemNum) {
                 mModelChangeFlag = true;
             }
+            ImGui::Checkbox("option1", &mRenderManager->mOption1);
             ImGui::End();
 
             // render
@@ -142,20 +143,22 @@ bool Engine::Update() {
         mModelChangeFlag = false;
         if (mModelNum == UVSphere) {
             MeshData sphereMesh =
-                GeometryGenerator::CreateSphere(100, 100, Vector2(4.0f, 2.5f));
+                GeometryGenerator::CreateSphere(100, 100, Vector2(1.0f, 1.0f));
+                //GeometryGenerator::CreateSphere(100, 100, Vector2(4.0f, 2.5f));
 
+            // https://cc0-textures.com/t/cc0t-metal-004
             const std::string path = "./Assets/Textures/PBRTextures/";
             sphereMesh.albedoTextureFilename =
-                path + "rusted-panels_albedo.png";
+                path + "Metal004_4K-PNG_Color.png";
             sphereMesh.heightTextureFilename =
-                path + "rusted-panels_height.png";
-            sphereMesh.aoTextureFilename = path + "rusted-panels_ao.png";
+                path + "Metal004_4K-PNG_Displacement.png";
+            sphereMesh.aoTextureFilename = path + "Metal004_4K-PNG_AO.png";
             sphereMesh.metallicTextureFilename =
-                path + "rusted-panels_metallic.png";
+                path + "Metal004_4K-PNG_Metalness.png";
             sphereMesh.normalTextureFilename =
-                path + "rusted-panels_normal-dx.png";
+                path + "Metal004_4K-PNG_NormalDX.png";
             sphereMesh.roughnessTextureFilename =
-                path + "rusted-panels_roughness.png";
+                path + "Metal004_4K-PNG_Roughness.png";
             mMainModel->Initialize(mDevice, mContext, sphereMesh);
 
         } else if (mModelNum == DamagedHelmet) {
@@ -169,6 +172,7 @@ bool Engine::Update() {
         }
     }
     mMainModel->mPixelConstData.useWireframe = mRenderManager->mUseWireframe;
+    mMainModel->mPixelConstData.option = mRenderManager->mOption1;
 
     D3DUtils::UpdateBuffer(mDevice, mContext, mMainModel->mPixelConstData,
                            mMainModel->mPixelCB);

@@ -106,7 +106,7 @@ MeshData GeometryGenerator::CreateSphere(uint32_t numStacks, uint32_t numSlices,
             biTangent.Normalize();
 
             v.tangent = biTangent.Cross(v.normal);
-            v.tangent.Normalize();
+            //v.tangent.Normalize();
 
             v.tangent.x /= texScale.x;
             v.tangent.y /= texScale.y;

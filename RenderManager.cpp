@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 RenderManager::RenderManager(int width, int height)
-    : mScreenWidth(width), mScreenHeight(height), mUseWireframe(false) {}
+    : mScreenWidth(width), mScreenHeight(height), mUseWireframe(false), mOption1(false) {}
 
 RenderManager::~RenderManager() {}
 
@@ -22,6 +22,7 @@ void RenderManager::InitRenderer(ComPtr<ID3D11Device> &device,
     CreateRasterizerStates();
     CreateBuffers();
 
+    // https://polyhaven.com/a/empty_play_room
     std::wstring basePath = L"./Assets/Textures/Cubemap/";
 
     // create textures
