@@ -11,7 +11,7 @@ struct PixelConstdata {
     int useWireframe = 0;
     int useMetallicRoughness = 0;
     int option = 0;
-    int dummy;
+    float rough_intensity = 0;
 };
 
 class Model : ObjectBase {

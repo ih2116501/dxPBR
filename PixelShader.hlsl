@@ -19,7 +19,7 @@ cbuffer PixelConstants : register(b5)
     int useWireframe = 0;
     int useMetallicRoughnessTex = 0;
     int option1;
-    int dummyy;
+    float roughIntensity;
 }
 
 float3 SchlickFresnel(float3 F0, float NdotH)
@@ -38,7 +38,7 @@ float3 SpecularIBL(float3 albedo, float3 normalWorld, float3 pixelToEye,
                    float metallic, float roughness)
 {
     float2 specularBRDF = brdfTex.Sample(clampSampler, float2(dot(normalWorld, pixelToEye), 1.0 - roughness)).rg;
-    float3 specularIrradiance = specularIBLTex.SampleLevel(g_sampler, reflect(-pixelToEye, normalWorld), roughness * 10.0f).rgb;
+    float3 specularIrradiance = specularIBLTex.SampleLevel(g_sampler, reflect(-pixelToEye, normalWorld), roughness * roughIntensity).rgb;
 
     const float3 Fdielectric = 0.04;
     float3 F0 = lerp(Fdielectric, albedo, metallic);
@@ -103,14 +103,14 @@ float4 main(PSInput psInput) : SV_TARGET
         float tRoughness = 0;
         
         if (useMetallicRoughnessTex == 0)
-        {
+        {            
             tMetallic = metallicTex.SampleLevel(g_sampler, psInput.tex, 0).r;
             tRoughness = roughnessTex.SampleLevel(g_sampler, psInput.tex, 0).r;
         }
         else
         {
-            tMetallic = metallicRoughnessTex.SampleLevel(g_sampler, psInput.tex, 0).b;
-            tRoughness = metallicRoughnessTex.SampleLevel(g_sampler, psInput.tex, 0).g;
+            tMetallic = metallicTex.SampleLevel(g_sampler, psInput.tex, 0).b;
+            tRoughness = metallicTex.SampleLevel(g_sampler, psInput.tex, 0).g;
         }
         float ao = aoTex.Sample(g_sampler, psInput.tex).r;
         float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, toEye, ao, tMetallic, tRoughness);

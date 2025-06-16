@@ -120,8 +120,10 @@ bool Engine::Run() {
             mModelNum = currentItemNum;
             if (prevItemNum != currentItemNum) {
                 mModelChangeFlag = true;
-            }
+            } 
             ImGui::Checkbox("option1", &mRenderManager->mOption1);
+
+            ImGui::SliderFloat("Roughness", &mMainModel->mPixelConstData.rough_intensity, 0, 10);
             ImGui::End();
 
             // render
@@ -169,6 +171,7 @@ bool Engine::Update() {
             md = modelLoader.GetMeshes();
             GeometryGenerator::NormalizeMesh(md, 3.0f);
             mMainModel->Initialize(mDevice, mContext, md);
+            mMainModel->mPixelConstData.useMetallicRoughness = 1;
         }
     }
     mMainModel->mPixelConstData.useWireframe = mRenderManager->mUseWireframe;
@@ -178,33 +181,36 @@ bool Engine::Update() {
                            mMainModel->mPixelCB);
 
     Vector2 currentMouseXY;
-    constData.view = constData.view.Transpose();
-    if (mGUIManager->mLButtonDown) {
-        if (mGUIManager->mLDragStart) {
-            mGUIManager->mLDragStart = false;
-            mPrevMouseXY = Vector2(float(mGUIManager->mMouseX),
-                                   float(mGUIManager->mMouseY));
-        } else {
-            currentMouseXY = Vector2(float(mGUIManager->mMouseX),
-                                     float(mGUIManager->mMouseY));
-            dMouse += (mPrevMouseXY - currentMouseXY);
-            constData.view = Matrix::CreateRotationY(dMouse.x / 150) *
-                             Matrix::CreateRotationX(dMouse.y / 150) *
-                             Matrix::CreateTranslation(-mEyePos);
-            mPrevMouseXY = currentMouseXY;
+    const auto &io = ImGui::GetIO();
+    if (!io.WantCaptureMouse) {
+        constData.view = constData.view.Transpose();
+        if (mGUIManager->mLButtonDown) {
+            if (mGUIManager->mLDragStart) { 
+                mGUIManager->mLDragStart = false;
+                mPrevMouseXY = Vector2(float(mGUIManager->mMouseX),
+                                       float(mGUIManager->mMouseY));
+            } else {
+                currentMouseXY = Vector2(float(mGUIManager->mMouseX),
+                                         float(mGUIManager->mMouseY));
+                dMouse += (mPrevMouseXY - currentMouseXY);
+                constData.view = Matrix::CreateRotationY(dMouse.x / 150) *
+                                 Matrix::CreateRotationX(dMouse.y / 150) *
+                                 Matrix::CreateTranslation(-mEyePos);
+                mPrevMouseXY = currentMouseXY;
+            }
         }
-    }
-    if (mGUIManager->mMouseWheel) {
-        constData.view *= Matrix::CreateTranslation(mEyePos);
-        mGUIManager->mMouseWheel = false;
-        int dir = (mGUIManager->mDWheel > 0) - (mGUIManager->mDWheel < 0);
-        mEyePos += Vector3(0.0f, 0.0f, dir * 0.3);
-        constData.view *= Matrix::CreateTranslation(-mEyePos);
-    }
+        if (mGUIManager->mMouseWheel) {
+            constData.view *= Matrix::CreateTranslation(mEyePos);
+            mGUIManager->mMouseWheel = false;
+            int dir = (mGUIManager->mDWheel > 0) - (mGUIManager->mDWheel < 0);
+            mEyePos += Vector3(0.0f, 0.0f, dir * 0.3);
+            constData.view *= Matrix::CreateTranslation(-mEyePos);
+        }
 
-    constData.eyePos = Vector3::Transform(mEyePos, constData.view.Invert());
-    constData.view = constData.view.Transpose();
-    constData.vp = constData.proj * constData.view;
+        constData.eyePos = Vector3::Transform(mEyePos, constData.view.Invert());
+        constData.view = constData.view.Transpose();
+        constData.vp = constData.proj * constData.view;
+    }
 
     D3DUtils::UpdateBuffer(mDevice, mContext, constData, mConstantBuffer);
     return true;
