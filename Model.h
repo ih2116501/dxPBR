@@ -10,8 +10,9 @@ using namespace Microsoft::WRL;
 struct PixelConstdata {
     int useWireframe = 0;
     int useMetallicRoughness = 0;
-    int option = 0;
+    int tonemap = 0;
     float rough_intensity = 0;
+    
 };
 
 class Model : ObjectBase {

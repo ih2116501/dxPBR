@@ -95,8 +95,8 @@ void RenderManager::InitRenderer(ComPtr<ID3D11Device> &device,
     mSkyBoxPipeline.vs = mSkyboxVS;
     mSkyBoxPipeline.ps = mSkyboxPS;
     mSkyBoxPipeline.SRVs = mSkyboxSRVs;
-    mSkyBoxPipeline.vsCbList;
-    mSkyBoxPipeline.psCbList;
+    //mSkyBoxPipeline.vsCbList;
+    //mSkyBoxPipeline.psCbList;
     mSkyBoxPipeline.DepthStencilView = mDSV;
     mSkyBoxPipeline.DSS = mDSS;
 
@@ -104,6 +104,7 @@ void RenderManager::InitRenderer(ComPtr<ID3D11Device> &device,
     mScreenPipeline.rs = mBasicRS;
     mScreenPipeline.vs = mScreenVS;
     mScreenPipeline.ps = mScreenPS;
+    //mScreenPipeline.psCbList = 
 
     // std::unordered_map<OjbectType, std::shared_ptr<std::vector<Model>>> um;
     // std::shared_ptr<std::vector<Model>> defaultobjList;
@@ -222,7 +223,6 @@ void RenderManager::RenderScreen() {
     mScreenPipeline.SetPipeline(mContext);
     mContext->ResolveSubresource(mResolvedBuffer.Get(), 0, mFloatBuffer.Get(),
                                  0, DXGI_FORMAT_R16G16B16A16_FLOAT);
-
     mContext->PSSetShaderResources(0, 1, mResolvedSRV.GetAddressOf());
     mContext->OMSetRenderTargets(1, mBackBufferRTV.GetAddressOf(), nullptr);
 }

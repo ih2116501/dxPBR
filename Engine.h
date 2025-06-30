@@ -68,5 +68,6 @@ class Engine {
     DirectX::SimpleMath::Vector2 mPrevMouseXY;
 
     int mModelNum;
+    int mMapperNum;
     bool mModelChangeFlag;
 };

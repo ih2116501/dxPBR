@@ -78,7 +78,7 @@ bool Engine::InitEngine(ComPtr<ID3D11Device> &device) {
     MeshData squareMesh = GeometryGenerator::CreateSquare();
     mScreenSquare = std::make_shared<Model>();
     mScreenSquare->Initialize(mDevice, mContext, squareMesh);
-
+    mScreenSquare->mPixelConstData.tonemap = 0;
     mMainModel = std::make_shared<Model>();
 
     MeshData skyBoxMesh = GeometryGenerator::CreateBox(30.0f);
@@ -121,9 +121,20 @@ bool Engine::Run() {
             if (prevItemNum != currentItemNum) {
                 mModelChangeFlag = true;
             } 
-            ImGui::Checkbox("option1", &mRenderManager->mOption1);
 
             ImGui::SliderFloat("Roughness", &mMainModel->mPixelConstData.rough_intensity, 0, 10);
+
+            const char *mappers[] = {"Linear", "Reinhard", "flimic", "unch2"};
+            static int currentMapperNum = 0;
+            //int prevMapperNum = currentMapperNum;
+            ImGui::Combo("tonemap", &mScreenSquare->mPixelConstData.tonemap, mappers, IM_ARRAYSIZE(mappers));
+            
+
+            //mMapperNum = currentMapperNum;
+            //if (prevMapperNum != currentMapperNum) {
+            //    mModelChangeFlag = true;
+            //} 
+            
             ImGui::End();
 
             // render
@@ -146,7 +157,7 @@ bool Engine::Update() {
         if (mModelNum == UVSphere) {
             MeshData sphereMesh =
                 GeometryGenerator::CreateSphere(100, 100, Vector2(1.0f, 1.0f));
-                //GeometryGenerator::CreateSphere(100, 100, Vector2(4.0f, 2.5f));
+            // GeometryGenerator::CreateSphere(100, 100, Vector2(4.0f, 2.5f));
 
             // https://cc0-textures.com/t/cc0t-metal-004
             const std::string path = "./Assets/Textures/PBRTextures/";
@@ -175,17 +186,18 @@ bool Engine::Update() {
         }
     }
     mMainModel->mPixelConstData.useWireframe = mRenderManager->mUseWireframe;
-    mMainModel->mPixelConstData.option = mRenderManager->mOption1;
 
     D3DUtils::UpdateBuffer(mDevice, mContext, mMainModel->mPixelConstData,
                            mMainModel->mPixelCB);
+    D3DUtils::UpdateBuffer(mDevice, mContext, mScreenSquare->mPixelConstData,
+                           mScreenSquare->mPixelCB);
 
     Vector2 currentMouseXY;
     const auto &io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
         constData.view = constData.view.Transpose();
         if (mGUIManager->mLButtonDown) {
-            if (mGUIManager->mLDragStart) { 
+            if (mGUIManager->mLDragStart) {
                 mGUIManager->mLDragStart = false;
                 mPrevMouseXY = Vector2(float(mGUIManager->mMouseX),
                                        float(mGUIManager->mMouseY));
@@ -225,7 +237,7 @@ bool Engine::Render() {
 
     mContext->VSSetConstantBuffers(0, cbList.size(), cbList.data());
     mContext->PSSetConstantBuffers(0, cbList.size(), cbList.data());
-
+    
     // render dafault objects
     mRenderManager->RenderObjects();
     mMainModel->Render(mContext); // objList[0]->Render(mContext);

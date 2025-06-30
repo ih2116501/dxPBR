@@ -2,6 +2,14 @@
 
 Texture2D screenTex : register(t0);
 
+cbuffer PixelConstants : register(b5)
+{
+    int useWireframe = 0;
+    int useMetallicRoughnessTex = 0;
+    int tonemap;
+    float roughIntensity;
+}
+
 struct PSIn
 {
     float4 pos : SV_POSITION;
@@ -69,12 +77,37 @@ float3 FilmicToneMapping(float3 color)
 
 float4 main(PSIn psInput) : SV_TARGET
 {
+    
     float4 color = screenTex.Sample(g_sampler, psInput.tex);
-    //return float4(Uncharted2ToneMapping(color.rgb), 1.0f);
-    //return float4(LinearToneMapping(color.rgb), 1.0f);
-    float green = color.g / 3;
-    color.g += green;
+    
+    if(tonemap == 0)
+    {
+        return float4(LinearToneMapping(color.rgb), 1.0f);
 
-    return float4(FilmicToneMapping(color.rgb ), 1.0f);
+    }
+    else if (tonemap == 1)
+    {
+        return float4(lumaBasedReinhardToneMapping(color.rgb), 1.0f);
+    }
+    else if (tonemap == 2)
+    {
+        return float4(FilmicToneMapping(color.rgb), 1.0f);
+    }
+    else if (tonemap == 3)
+    {
+        return float4(Uncharted2ToneMapping(color.rgb), 1.0f);
+    }
+    else
+    {
+        return float4(0.0f, 1.0f, 0.0f, 1.0f);
+    }
+    //return float4(roughIntensity, roughIntensity, roughIntensity, 1.0f);
+    //float4 color = screenTex.Sample(g_sampler, psInput.tex);
+    //return float4(LinearToneMapping(color.rgb), 1.0f);
+    //return float4(Uncharted2ToneMapping(color.rgb), 1.0f);
+    //float green = color.g / 3;
+    //color.g += green;
+
     //return float4(lumaBasedReinhardToneMapping(color.rgb), 1.0f);
+    //return float4(FilmicToneMapping(color.rgb), 1.0f);
 }
