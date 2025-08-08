@@ -70,4 +70,5 @@ class Engine {
     int mModelNum;
     int mMapperNum;
     bool mModelChangeFlag;
+    bool mEnvChangeFlag;
 };

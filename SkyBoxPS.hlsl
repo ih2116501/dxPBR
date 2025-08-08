@@ -18,8 +18,9 @@ struct SBPSInput
 float4 main(SBPSInput input) : SV_TARGET
 {
     float3 env = envIBLTex.Sample(g_sampler, input.posWorld);
+    //float3 env = envIBLTex.Sample(g_sampler, input.posWorld);
+    //float3 env = envIBLTex.Sample(g_sampler, input.posWorld);
     return float4(env, 1.0f);
-    //return float4(FilmicToneMapping(env), 1.0f);
 
     //return envIBLTex.Sample(g_sampler, input.posWorld);
     //return float4(0.8f, 0.2f, 0.6f, 1.0f);

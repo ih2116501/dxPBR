@@ -1,4 +1,5 @@
 #pragma once
+#include "Light.h"
 #include "Mesh.h"
 #include "ObjectBase.h"
 #include <memory>
@@ -11,8 +12,8 @@ struct PixelConstdata {
     int useWireframe = 0;
     int useMetallicRoughness = 0;
     int tonemap = 0;
-    float rough_intensity = 0;
-    
+    float rough_intensity = 1;
+    Light light;
 };
 
 class Model : ObjectBase {
@@ -33,7 +34,7 @@ class Model : ObjectBase {
                       std::vector<MeshData> &meshes);
     void CreateMesh(ComPtr<ID3D11Device> &device,
                     ComPtr<ID3D11DeviceContext> &context, MeshData &meshData);
-    
+
     void UpdateConstantBuffers(ComPtr<ID3D11Device> &device,
                                ComPtr<ID3D11DeviceContext> &context) override;
 

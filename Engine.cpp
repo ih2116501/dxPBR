@@ -13,7 +13,8 @@ Engine::Engine()
     : mMainWindow(0), mScreenWidth(1280), mScreenHeight(720), mDevice(nullptr),
       mContext(nullptr), mSwapChain(nullptr), mBackBufferRTV(nullptr),
       mViewRot(Vector2(0.0f)), mViewport({}), mPrevMouseXY(Vector2(0.0f, 0.0f)),
-      dMouse(Vector2(0.0f)), mModelNum(0), mModelChangeFlag(true) {
+      dMouse(Vector2(0.0f)), mModelNum(0), mModelChangeFlag(true),
+      mEnvChangeFlag(false) {
     mGUIManager = std::make_shared<GUIManager>(mScreenWidth, mScreenHeight);
     mRenderManager =
         std::make_shared<RenderManager>(mScreenWidth, mScreenHeight);
@@ -81,7 +82,7 @@ bool Engine::InitEngine(ComPtr<ID3D11Device> &device) {
     mScreenSquare->mPixelConstData.tonemap = 0;
     mMainModel = std::make_shared<Model>();
 
-    MeshData skyBoxMesh = GeometryGenerator::CreateBox(30.0f);
+    MeshData skyBoxMesh = GeometryGenerator::CreateBox(50.0f);
     mSkyBox = std::make_shared<Model>();
     mSkyBox->Initialize(mDevice, mContext, skyBoxMesh);
     this->objList.push_back(mSkyBox);
@@ -113,28 +114,35 @@ bool Engine::Run() {
 
             ImGui::Checkbox("wireframe", &mRenderManager->mUseWireframe);
 
-            const char *items[] = {"UVSphere", "DamagedHelmet"};
-            static int currentItemNum = 0;
-            int prevItemNum = currentItemNum;
-            ImGui::Combo("model", &currentItemNum, items, IM_ARRAYSIZE(items));
-            mModelNum = currentItemNum;
-            if (prevItemNum != currentItemNum) {
+            // select skybox
+            const char *envs[] = {"room", "qwantani"};
+            static int currentEnv = 0;
+            mEnvChangeFlag = ImGui::Combo("Env", &mRenderManager->envNum, envs, IM_ARRAYSIZE(envs));
+
+            // select model
+            const char *models[] = {"UVSphere", "DamagedHelmet"};
+            static int currentModelNum = 0; 
+            int prevItemNum = currentModelNum;
+            ImGui::Combo("model", &currentModelNum, models, IM_ARRAYSIZE(models));
+            mModelNum = currentModelNum;
+            if (prevItemNum != currentModelNum) {
                 mModelChangeFlag = true;
             } 
 
-            ImGui::SliderFloat("Roughness", &mMainModel->mPixelConstData.rough_intensity, 0, 10);
+            // roughness intensity
+            ImGui::SliderFloat("Roughness", &mMainModel->mPixelConstData.rough_intensity, 1, 10);
 
+            // select tonemapper
             const char *mappers[] = {"Linear", "Reinhard", "flimic", "unch2"};
-            static int currentMapperNum = 0;
             //int prevMapperNum = currentMapperNum;
             ImGui::Combo("tonemap", &mScreenSquare->mPixelConstData.tonemap, mappers, IM_ARRAYSIZE(mappers));
-            
 
-            //mMapperNum = currentMapperNum;
-            //if (prevMapperNum != currentMapperNum) {
-            //    mModelChangeFlag = true;
-            //} 
+            // light control
+            ImGui::SliderFloat3("lightPosX", &mMainModel->mPixelConstData.light.position.x, -4.0f, 4.0f);
+            ImGui::ColorPicker3("lightColor", &mMainModel->mPixelConstData.light.color.x);
             
+            ImGui::InputInt("option", &mMainModel->mPixelConstData.tonemap);
+
             ImGui::End();
 
             // render
@@ -187,6 +195,9 @@ bool Engine::Update() {
     }
     mMainModel->mPixelConstData.useWireframe = mRenderManager->mUseWireframe;
 
+    if (mEnvChangeFlag)
+        mRenderManager->UpdateSkybox();
+
     D3DUtils::UpdateBuffer(mDevice, mContext, mMainModel->mPixelConstData,
                            mMainModel->mPixelCB);
     D3DUtils::UpdateBuffer(mDevice, mContext, mScreenSquare->mPixelConstData,
@@ -237,7 +248,7 @@ bool Engine::Render() {
 
     mContext->VSSetConstantBuffers(0, cbList.size(), cbList.data());
     mContext->PSSetConstantBuffers(0, cbList.size(), cbList.data());
-    
+
     // render dafault objects
     mRenderManager->RenderObjects();
     mMainModel->Render(mContext); // objList[0]->Render(mContext);

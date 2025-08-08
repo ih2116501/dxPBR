@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 RenderManager::RenderManager(int width, int height)
-    : mScreenWidth(width), mScreenHeight(height), mUseWireframe(false), mOption1(false) {}
+    : mScreenWidth(width), mScreenHeight(height), mUseWireframe(false), mOption1(false), envNum(0), basePath(L"./Assets/Textures/Cubemap/") {}
 
 RenderManager::~RenderManager() {}
 
@@ -23,29 +23,34 @@ void RenderManager::InitRenderer(ComPtr<ID3D11Device> &device,
     CreateBuffers();
 
     // https://polyhaven.com/a/empty_play_room
-    std::wstring basePath = L"./Assets/Textures/Cubemap/";
+    
+    // room , qwantani
+    //std::wstring basePath = L"./Assets/Textures/Cubemap/room/";
+    //std::wstring basePath = L"./Assets/Textures/Cubemap/qwantani/";
+    //std::wstring basePath = L"./Assets/Textures/Cubemap/";
+    //const std::wstring envNames[2] = {L"room/", L"qwantani/"};
+    //std::wstring envPath = basePath + envNames[envNum];
+    //// create textures
+    //D3DUtils::CreateDDSTexture(
+    //    mDevice, (envPath + L"Env.dds").c_str(), true,
+    //    mEnvSRV);
+    //mSkyboxSRVs.push_back(mEnvSRV.Get());
 
-    // create textures
-    D3DUtils::CreateDDSTexture(
-        mDevice, (basePath + L"empty_play_roomEnvHDR.dds").c_str(), true,
-        mEnvSRV);
-    mSkyboxSRVs.push_back(mEnvSRV.Get());
+    //D3DUtils::CreateDDSTexture(
+    //    mDevice, (envPath + L"Specular.dds").c_str(), true,
+    //    mSpecularSRV);
+    //mSkyboxSRVs.push_back(mSpecularSRV.Get());
 
-    D3DUtils::CreateDDSTexture(
-        mDevice, (basePath + L"empty_play_roomSpecularHDR.dds").c_str(), true,
-        mSpecularSRV);
-    mSkyboxSRVs.push_back(mSpecularSRV.Get());
+    //D3DUtils::CreateDDSTexture(
+    //    mDevice, (envPath + L"Diffuse.dds").c_str(), true,
+    //    mIrradianceSRV);
+    //mSkyboxSRVs.push_back(mIrradianceSRV.Get());
 
-    D3DUtils::CreateDDSTexture(
-        mDevice, (basePath + L"empty_play_roomDiffuseHDR.dds").c_str(), true,
-        mIrradianceSRV);
-    mSkyboxSRVs.push_back(mIrradianceSRV.Get());
-
-    D3DUtils::CreateDDSTexture(mDevice,
-                               (basePath + L"empty_play_roomBrdf.dds").c_str(),
-                               false, mBrdfSRV);
-    mSkyboxSRVs.push_back(mBrdfSRV.Get());
-
+    //D3DUtils::CreateDDSTexture(mDevice,
+    //                           (envPath + L"Brdf.dds").c_str(),
+    //                           false, mBrdfSRV);
+    //mSkyboxSRVs.push_back(mBrdfSRV.Get());
+    UpdateSkybox();
     // create shaders
     D3DUtils::CreateVertexShader(mDevice, L"VertexShader.hlsl", mVertexShader,
                                  mInputLayout);
@@ -197,6 +202,32 @@ void RenderManager::ClearFrame() {
     mContext->ClearDepthStencilView(
         mDSV.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
     mBasicPipeline.rs = mUseWireframe ? mWireframeRS : mBasicRS;
+}
+
+void RenderManager::UpdateSkybox() {
+    mSkyboxSRVs.clear();
+    std::cout << "clear skyboxSRV.   size : " << mSkyboxSRVs.size()
+              << std::endl;
+    const std::wstring envNames[2] = {L"room/", L"qwantani/"};
+    std::wstring envPath = basePath + envNames[envNum];
+    // create textures
+    D3DUtils::CreateDDSTexture(mDevice, (envPath + L"Env.dds").c_str(), true,
+                               mEnvSRV);
+    mSkyboxSRVs.push_back(mEnvSRV.Get());
+
+    D3DUtils::CreateDDSTexture(mDevice, (envPath + L"Specular.dds").c_str(),
+                               true, mSpecularSRV);
+    mSkyboxSRVs.push_back(mSpecularSRV.Get());
+
+    D3DUtils::CreateDDSTexture(mDevice, (envPath + L"Diffuse.dds").c_str(),
+                               true, mIrradianceSRV);
+    mSkyboxSRVs.push_back(mIrradianceSRV.Get());
+
+    D3DUtils::CreateDDSTexture(mDevice, (envPath + L"Brdf.dds").c_str(), false,
+                               mBrdfSRV);
+    mSkyboxSRVs.push_back(mBrdfSRV.Get());
+    mBasicPipeline.SRVs = mSkyboxSRVs;
+    mSkyBoxPipeline.SRVs = mSkyboxSRVs;
 }
 
 void RenderManager::RenderObjects() {

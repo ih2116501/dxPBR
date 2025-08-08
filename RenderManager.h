@@ -1,5 +1,6 @@
 #pragma once
 #include "Pipeline.h"
+#include <iostream>
 #include <string>
 
 class RenderManager {
@@ -21,8 +22,11 @@ class RenderManager {
     void RenderToneMap();
     void RenderScreen();
     void ClearFrame();
+    void UpdateSkybox();
     bool mUseWireframe;
     bool mOption1;
+    int envNum;
+    std::wstring basePath;
 
 
   private:
